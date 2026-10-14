@@ -4,20 +4,19 @@
     "strict": true,
     "jsx": "react-native",
     "skipLibCheck": true,
-    "baseUrl": ".",
     "types": ["react", "react-native"],
     "paths": {
       "@/*": [
         "./*"
       ],
       "expo-router": [
-        "node_modules/expo-router/build/index.d.ts"
+        "./node_modules/expo-router/build/index.d.ts"
       ],
       "expo-router/*": [
-        "node_modules/expo-router/build/*"
+        "./node_modules/expo-router/build/*"
       ],
       "expo-router/src/*": [
-        "node_modules/expo-router/build/*"
+        "./node_modules/expo-router/build/*"
       ]
     }
   },
