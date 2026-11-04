@@ -1,23 +1,7 @@
 // app/(tabs)/tank.tsx
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Animated,
-  Dimensions,
-  FlatList,
-  Image,
-  Alert,
-  Modal,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  View,
-} from 'react-native';
+import { Animated, Dimensions, FlatList, Image, Alert, Modal, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 import * as ImagePicker from 'expo-image-picker';

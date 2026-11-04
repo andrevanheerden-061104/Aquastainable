@@ -1,27 +1,24 @@
-import { Link, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Image, Keyboard, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { StyleSheet, Text } from 'react-native';
 
+import AuthField from '@/components/auth/AuthField';
+import AuthLayout from '@/components/auth/AuthLayout';
 import SwipeToConfirm from '@/components/gestures/SwipeToConfirm';
+import { Palette } from '@/constants/palette';
 
-import Colors from './colors';
 import { OTP_ENABLED } from './hooks/authHeader';
 import { useAuthApi } from './hooks/useAuthApi';
-
-const heroImage = require('../assets/logo/Fish.jpeg');
 
 export default function SignInScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const { loading, error, signIn } = useAuthApi();
+  const { loading, signIn } = useAuthApi();
   const [formError, setFormError] = useState('');
 
   const handleSignIn = async () => {
     setFormError('');
-
     if (!email.trim()) {
       setFormError('Please enter your email address.');
       return;
@@ -30,12 +27,8 @@ export default function SignInScreen() {
       setFormError('Please enter your password.');
       return;
     }
-
     try {
-      await signIn({
-        email: email.trim(),
-        password,
-      });
+      await signIn({ email: email.trim(), password });
       // With 2FA on, go to the 6-digit code screen first.
       router.replace(OTP_ENABLED ? '/verify' : '/loading');
     } catch (err) {
@@ -43,191 +36,40 @@ export default function SignInScreen() {
     }
   };
 
-  useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
-    const hideSub = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
-
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <Image source={heroImage} style={[styles.backgroundImage, keyboardVisible && styles.hiddenBackground]} resizeMode="cover" />
-
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome back</Text>
-        <Text style={styles.subtitle}>Sign in to look after your tanks, fish and plants.</Text>
-
-        <View style={styles.form}>
-          {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Email address"
-            textContentType="emailAddress"
-            autoComplete="email"
-            placeholderTextColor={Colors.gray}
-            style={styles.input}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <View style={styles.passwordRow}>
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Password"
-              placeholderTextColor={Colors.gray}
-              style={[styles.input, styles.passwordInput]}
-              secureTextEntry={!showPassword}
-            />
-            <Pressable
-              style={styles.showButton}
-              onPress={() => setShowPassword((prev) => !prev)}
-            >
-              <Text style={styles.showButtonText}>{showPassword ? 'Hide' : 'Show'}</Text>
-            </Pressable>
-          </View>
-
-          <SwipeToConfirm label="Swipe to sign in" onConfirm={handleSignIn} loading={loading} style={styles.swipe} />
-
-          <View style={styles.footerRow}>
-            <Text style={styles.footerText}>Don't have an account?</Text>
-            <Link href="/signup" style={styles.footerLink}>
-              <Text style={styles.footerLinkText}>Sign Up</Text>
-            </Link>
-          </View>
-        </View>
-      </View>
-    </SafeAreaView>
+    <AuthLayout
+      mode="signin"
+      hero={require('../assets/hero/betta-bubbles.jpg')}
+      titleLight="Welcome"
+      titleBold="back to your tanks"
+      subtitle="Sign in to check your water, fish and plants."
+    >
+      {formError ? <Text style={styles.error}>{formError}</Text> : null}
+      <AuthField
+        icon="envelope"
+        value={email}
+        onChangeText={setEmail}
+        placeholder="Email address"
+        keyboardType="email-address"
+        autoCapitalize="none"
+        textContentType="emailAddress"
+        autoComplete="email"
+      />
+      <AuthField
+        icon="lock"
+        secret
+        value={password}
+        onChangeText={setPassword}
+        placeholder="Password"
+        textContentType="password"
+        autoComplete="password"
+      />
+      <SwipeToConfirm label="Swipe to sign in" onConfirm={handleSignIn} loading={loading} tone="glass" style={styles.swipe} />
+    </AuthLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    position: 'relative',
-  },
-  backgroundImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '49%',
-  },
-
-  content: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    paddingHorizontal: 24,
-    paddingBottom: 40,
-  },
-  title: {
-    color: Colors.white,
-    fontSize: 36,
-    fontWeight: '800',
-    marginBottom: 8,
-  },
-  subtitle: {
-    color: Colors.gray,
-    fontSize: 16,
-    lineHeight: 24,
-    marginBottom: 28,
-    maxWidth: 320,
-  },
-  form: {
-    width: '100%',
-  },
-  input: {
-    width: '100%',
-    height: 54,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    color: Colors.white,
-    marginBottom: 14,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  swipe: {
-    marginTop: 8,
-  },
-  primaryButton: {
-    width: '100%',
-    height: 56,
-    borderRadius: 18,
-    backgroundColor: Colors.waterFill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
-  primaryButtonText: {
-    color: Colors.white,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  secondaryButton: {
-    width: '100%',
-    height: 56,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: Colors.waterFill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 14,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  secondaryButtonText: {
-    color: Colors.white,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  errorText: {
-    color: '#FFB3B3',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  footerText: {
-    color: Colors.gray,
-    fontSize: 14,
-    marginRight: 8,
-  },
-  footerLink: {
-    paddingVertical: 2,
-  },
-  footerLinkText: {
-    color: Colors.waterFill,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  passwordRow: {
-    position: 'relative',
-  },
-  passwordInput: {
-    paddingRight: 90,
-  },
-  showButton: {
-    position: 'absolute',
-    right: 16,
-    top: 12,
-    height: 30,
-    paddingHorizontal: 10,
-    justifyContent: 'center',
-  },
-  showButtonText: {
-    color: Colors.waterFill,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  hiddenBackground: {
-    height: 0,
-    opacity: 0,
-  },
+  error: { color: Palette.dangerText, fontSize: 13, textAlign: 'center', paddingHorizontal: 6 },
+  swipe: { marginTop: 4 },
 });

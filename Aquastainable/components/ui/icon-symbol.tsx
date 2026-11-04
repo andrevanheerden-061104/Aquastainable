@@ -41,6 +41,9 @@ const MAPPING = {
   'line.3.horizontal': 'menu',
   'square.and.pencil': 'edit-note',
   'hand.tap': 'touch-app',
+  person: 'person-outline',
+  eye: 'visibility',
+  'eye.slash': 'visibility-off',
 } as IconMapping;
 
 /**

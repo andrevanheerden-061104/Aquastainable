@@ -78,7 +78,7 @@ export default function SwipeToConfirm({ label, onConfirm, disabled = false, loa
           {loading ? <ActivityIndicator color="#fff" /> : <IconSymbol name="chevron.right" size={26} color="#FFFFFF" />}
         </Animated.View>
       </GestureDetector>
-      {trackWidth > 280 ? (
+      {trackWidth > 280 && label.length <= 18 ? (
         <View pointerEvents="none" style={styles.hintArrows}>
           <Text style={styles.hintText}>›››</Text>
         </View>

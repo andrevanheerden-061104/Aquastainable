@@ -38,7 +38,15 @@ const boot = `<script>
         } catch (e) {}
       })();
     </script>
-    <style>html,body{background:#101217}</style>`;
+    <script>
+      // Inside the phone mock-up the app fills the whole screen, under the drawn
+      // status bar (top) and home bar (bottom). Tell the safe-area library about
+      // them: it reads its insets from the padding of a hidden element it adds.
+      if (window.self !== window.top) {
+        document.write('<style>body > div[style*="transition-property: padding"]{padding-top:50px !important;padding-bottom:28px !important;}</style>');
+      }
+    </script>
+    <style>html,body{background:#0B0D11}</style>`;
 appHtml = appHtml.replace('<meta charset="utf-8" />', `<meta charset="utf-8" />\n    ${boot}`);
 fs.writeFileSync(path.join(dist, 'app.html'), appHtml);
 fs.rmSync(appHtmlPath);

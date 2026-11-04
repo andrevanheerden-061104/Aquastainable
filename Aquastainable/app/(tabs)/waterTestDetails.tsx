@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, View, Image, Dimensions } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View, Image, Dimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 
