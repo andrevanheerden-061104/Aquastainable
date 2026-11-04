@@ -41,6 +41,8 @@ type Props = {
   textStyle?: StyleProp<TextStyle>;
   accessibilityLabel?: string;
   testID?: string;
+  /** Draw the ripple over the content (for photo cards). */
+  rippleOnTop?: boolean;
 };
 
 const haptic = (kind: 'tick' | 'done') => {
@@ -51,7 +53,7 @@ const haptic = (kind: 'tick' | 'done') => {
 
 export default function HoldAction({
   onComplete, label, icon, children, tone = 'default', speed = 'quick', disabled = false,
-  style, contentStyle, textStyle, accessibilityLabel, testID,
+  style, contentStyle, textStyle, accessibilityLabel, testID, rippleOnTop = false,
 }: Props) {
   const colors = TONES[tone];
   const duration = HOLD_MS[speed];
@@ -126,7 +128,7 @@ export default function HoldAction({
         ]}
       >
         <Animated.View
-          style={[styles.ripple, { width: diameter, height: diameter, borderRadius: diameter / 2, backgroundColor: colors.ripple }, rippleStyle, { pointerEvents: 'none' }]}
+          style={[styles.ripple, { width: diameter, height: diameter, borderRadius: diameter / 2, backgroundColor: colors.ripple }, rippleStyle, { pointerEvents: 'none', zIndex: rippleOnTop ? 2 : 0 }]}
         />
         <View style={[styles.content, contentStyle, { pointerEvents: 'none' }]}>
           {children ?? (

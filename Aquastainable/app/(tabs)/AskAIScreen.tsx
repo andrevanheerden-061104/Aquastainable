@@ -8,7 +8,7 @@ import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, St
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import ActionToggles from '@/components/AiAssistant/ActionToggles';
+import ContextPicker, { speciesKey } from '@/components/AiAssistant/ContextPicker';
 import AnswerCard from '@/components/AiAssistant/AnswerCard';
 import InputBar from '@/components/AiAssistant/InputBar';
 import HoldAction from '@/components/gestures/HoldAction';
@@ -23,11 +23,23 @@ import { useTankApi } from '@/lib/hooks/useTankApi';
 
 type TopicId = 'sick' | 'feeding' | 'tankmates' | 'water';
 
-const TOPICS: { id: TopicId; label: string; icon: string; mode: string; question: string }[] = [
-  { id: 'sick', label: 'Sick fish', icon: 'exclamationmark.triangle', mode: 'fish sickness and problems', question: 'My fish has white spots on its fins. What should I do?' },
-  { id: 'feeding', label: 'Feeding', icon: 'fish.fill', mode: 'feeding', question: 'How much and how often should I feed my fish?' },
-  { id: 'tankmates', label: 'Tank mates', icon: 'sparkles', mode: 'tank mates and stocking', question: 'Which fish can safely live with my fish?' },
-  { id: 'water', label: 'Water & fish', icon: 'drop.fill', mode: 'water quality for fish', question: 'Is my water safe for my fish right now?' },
+const TOPICS: { id: TopicId; label: string; icon: string; mode: string; color: string; questions: string[] }[] = [
+  {
+    id: 'sick', label: 'Sick fish', icon: 'exclamationmark.triangle', mode: 'fish sickness and problems', color: '#F05D5E',
+    questions: ['My fish has white spots on its fins. What should I do?', 'Why is my fish staying at the bottom?', 'My fish has torn or ragged fins. Is it sick?'],
+  },
+  {
+    id: 'feeding', label: 'Feeding', icon: 'fork.knife', mode: 'feeding', color: '#E0782A',
+    questions: ['How much and how often should I feed my fish?', 'What is the best food for my fish?', 'Can I leave my fish without food for a weekend?'],
+  },
+  {
+    id: 'tankmates', label: 'Tank mates', icon: 'person.3', mode: 'tank mates and stocking', color: '#A78BFA',
+    questions: ['Which fish can safely live with my fish?', 'Is my tank overstocked?', 'Why are my fish chasing each other?'],
+  },
+  {
+    id: 'water', label: 'Water & fish', icon: 'drop.fill', mode: 'water quality for fish', color: '#4FB3CC',
+    questions: ['Is my water safe for my fish right now?', 'How often should I change the water?', 'Why is my tank water cloudy?'],
+  },
 ];
 
 // Older links (e.g. from the sickness helper) pass a colour "theme"; map it to a topic.
@@ -110,8 +122,12 @@ export default function AskAIScreen() {
 
   const getContext = () => ({
     tanks: selection.tankIds.length ? tanks.filter((tank) => selection.tankIds.includes(tank.tankId || tank.id)) : tanks,
-    fish: selection.speciesIds.length ? fish.filter((item) => selection.speciesIds.includes(item.fishId || item.id)) : fish,
-    plants: selection.speciesIds.length ? plants.filter((item) => selection.speciesIds.includes(item.plantId || item.id)) : plants,
+    fish: selection.speciesIds.length
+      ? fish.filter((item) => selection.speciesIds.includes(speciesKey(item, 'fish')))
+      : selection.tankIds.length ? fish.filter((item) => selection.tankIds.includes(String(item.tankId))) : fish,
+    plants: selection.speciesIds.length
+      ? plants.filter((item) => selection.speciesIds.includes(speciesKey(item, 'plant')))
+      : selection.tankIds.length ? plants.filter((item) => selection.tankIds.includes(String(item.tankId))) : plants,
     selectedTankIds: selection.tankIds,
     selectedSpeciesIds: selection.speciesIds,
     mode: TOPICS.find((item) => item.id === topic)?.mode || 'general fish question',
@@ -143,11 +159,7 @@ export default function AskAIScreen() {
     }
   };
 
-  const tankOptions = tanks.map((tank) => ({ id: tank.tankId || tank.id, label: tank.tankName || 'Unnamed tank', kind: 'tank' as const }));
-  const speciesOptions = [
-    ...fish.map((item) => ({ id: item.fishId || item.id, label: item.name || item.FBname || 'Fish', kind: 'fish' as const })),
-    ...plants.map((item) => ({ id: item.plantId || item.id, label: item.name || 'Plant', kind: 'plant' as const })),
-  ];
+  const activeTopic = TOPICS.find((item) => item.id === topic) || null;
   const fishNames = Array.from(new Set(fish.map((item) => item.name || item.FBname).filter(Boolean))).slice(0, 3);
 
   return (
@@ -222,36 +234,50 @@ export default function AskAIScreen() {
                     return (
                       <Pressable
                         key={item.id}
-                        onPress={() => { setTopic(item.id); setDraft(item.question); }}
-                        style={[styles.topic, active && styles.topicActive]}
+                        onPress={() => setTopic(active ? null : item.id)}
+                        style={[styles.topic, { borderColor: `${item.color}40` }, active && { backgroundColor: `${item.color}26`, borderColor: item.color }]}
                         accessibilityState={{ selected: active }}
                       >
-                        <IconSymbol name={item.icon as any} size={16} color={active ? Palette.primaryBright : Palette.textMuted} />
+                        <View style={[styles.topicIcon, { backgroundColor: `${item.color}26` }]}>
+                          <IconSymbol name={item.icon as any} size={14} color={item.color} />
+                        </View>
                         <Text style={[styles.topicText, active && styles.topicTextActive]}>{item.label}</Text>
                       </Pressable>
                     );
                   })}
                 </View>
 
-                <Text style={styles.sectionLabel}>Or hold a question to ask it</Text>
+                <Text style={styles.sectionLabel}>{activeTopic ? `${activeTopic.label}: hold a question to ask it` : 'Or hold a question to ask it'}</Text>
                 <View style={{ gap: 8 }}>
-                  {(topic ? TOPICS.filter((item) => item.id === topic) : TOPICS.slice(0, 3)).map((item) => (
-                    <HoldAction
-                      key={item.id}
-                      onComplete={() => { setTopic(item.id); void sendMessage(item.question); }}
-                      style={styles.starter}
-                      contentStyle={styles.starterContent}
-                      accessibilityLabel={item.question}
-                    >
-                      <Text style={styles.starterText}>{item.question}</Text>
-                      <IconSymbol name="arrow.up" size={16} color={Palette.textFaint} />
-                    </HoldAction>
+                  {(activeTopic
+                    ? activeTopic.questions.map((question) => ({ topic: activeTopic, question }))
+                    : TOPICS.slice(0, 3).map((item) => ({ topic: item, question: item.questions[0] }))
+                  ).map(({ topic: itemTopic, question }) => (
+                    <Animated.View key={question} entering={FadeIn.duration(220)}>
+                      <HoldAction
+                        onComplete={() => { setTopic(itemTopic.id); void sendMessage(question); }}
+                        style={[styles.starter, { borderColor: `${itemTopic.color}33` }]}
+                        contentStyle={styles.starterContent}
+                        accessibilityLabel={question}
+                      >
+                        <View style={[styles.starterBar, { backgroundColor: itemTopic.color }]} />
+                        <Text style={styles.starterText}>{question}</Text>
+                        <IconSymbol name="arrow.up" size={16} color={itemTopic.color} />
+                      </HoldAction>
+                    </Animated.View>
                   ))}
                 </View>
 
                 <View style={styles.context}>
                   <Text style={styles.sectionLabel}>Answers use these tanks and fish</Text>
-                  <ActionToggles tanks={tankOptions} species={speciesOptions} onSelectionChange={setSelection} />
+                  <ContextPicker
+                    tanks={tanks}
+                    fish={fish}
+                    plants={plants}
+                    selection={selection}
+                    onSelectionChange={setSelection}
+                    accent={activeTopic?.color}
+                  />
                 </View>
               </Animated.View>
             )}
@@ -356,8 +382,9 @@ const styles = StyleSheet.create({
   heroText: { color: Palette.textMuted, fontSize: 14, lineHeight: 20, textAlign: 'center', maxWidth: 300 },
   sectionLabel: { color: Palette.textFaint, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: 'Montserrat_600SemiBold', marginTop: 6 },
   topics: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  topic: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999, backgroundColor: Palette.surfaceRaised, borderWidth: 1, borderColor: Palette.border },
-  topicActive: { backgroundColor: Palette.primarySoft, borderColor: Palette.primaryBorder },
+  topic: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 6, paddingRight: 14, paddingVertical: 6, borderRadius: 999, backgroundColor: Palette.surfaceRaised, borderWidth: 1, borderColor: Palette.border },
+  topicIcon: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  starterBar: { width: 3, alignSelf: 'stretch', borderRadius: 2 },
   topicText: { color: Palette.textMuted, fontSize: 13, fontFamily: 'Montserrat_600SemiBold' },
   topicTextActive: { color: Palette.text },
   starter: { borderRadius: 18, minHeight: 54 },

@@ -1,6 +1,33 @@
 # Fish Data Architecture
 
-Fish data is fetched on demand. The backend does not keep a global fish catalog.
+Fish search runs two things at the same time:
+
+1. **Quick-search catalogue** (`data/commonFish.json`, logic in `catalog.js`): the 50 most common pet fish, with care data (temperature, pH, size, group size, tank size, swim level, lifespan, origin, diet, temperament, care level). It matches the common name, nicknames ("beta", "cory", "yellow lab") and the scientific name together, and allows small typos. These fish come first and use the catalogue care data instead of the AI care profile.
+2. **Online search** (iNaturalist) for everything else. It is cut off after 5 seconds so a slow API never blocks the quick results.
+
+The app has its own copy (`Aquastainable/lib/data/commonFish.json` + `lib/fishCatalog.ts`), so the 50 common fish appear instantly on every letter, even before the server answers.
+
+The search rules live in `backend/lib/quickSearch.js` (server) and `Aquastainable/lib/quickSearch.ts` (app); fish and plants share them.
+
+### Common plants
+
+Plants work the same way: `backend/plant/data/commonPlants.json` (33 common aquarium plants, including Duckweed, Java fern, Anubias, Java moss, crypts, Amazon sword, hornwort, vallisneria and the usual floaters) plus `plant/catalog.js`. The app copy is `Aquastainable/lib/data/commonPlants.json`. Each plant has light, growth, placement, how to plant it, temperature, pH, care level, max height, CO2 need, origin and a short description. Plants that are invasive in South Africa say so in their description.
+
+### Photos
+
+Run this once on a computer with internet access, from the `backend` folder:
+
+```bash
+node scripts/fill-catalogue-images.js          # fish + plants, missing photos only
+node scripts/fill-catalogue-images.js --all    # refresh every photo
+node scripts/fill-catalogue-images.js plants   # only plants (or: fish)
+```
+
+It updates both JSON copies of each list. Commit the changed files afterwards. Until then, the server looks up missing photos itself (in the background after start-up, then cached).
+
+### Adding a fish or plant to the catalogue
+
+Add an entry to the backend JSON file (same fields as the others; fish ids start with `cf-`, plant ids with `cp-`), copy the file to `Aquastainable/lib/data/`, then run the photo script.
 
 ## Providers
 

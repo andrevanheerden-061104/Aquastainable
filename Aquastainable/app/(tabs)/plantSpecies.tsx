@@ -12,6 +12,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Palette } from '@/constants/palette';
 import { auth } from '@/firebase';
 import { SavedPlant, usePlantApi } from '@/lib/hooks/usePlantApi';
+import { shortTemperament } from '@/lib/fishText';
 
 type SpeciesCardItem = SavedPlant;
 
@@ -64,7 +65,7 @@ export default function PlantSpeciesScreen() {
           <Text style={styles.title}>Plants</Text>
           {species.length ? <View style={styles.count}><Text style={styles.countText}>{species.length}</Text></View> : null}
         </View>
-        <Text style={styles.subtitle}>Tap a plant to see its care. Press and hold the bin to remove it.</Text>
+        <Text style={styles.subtitle}>Hold a plant to see its care. Hold the bin to remove it.</Text>
       </View>
 
       <FlatList
@@ -82,8 +83,12 @@ export default function PlantSpeciesScreen() {
             <PhotoCard
               image={item.image}
               title={item.name}
-              subtitle={item.tankName || 'Unnamed tank'}
-              badge={item.growthRate ? `${item.growthRate} growth` : undefined}
+              subtitle={item.scientificName || undefined}
+              badge={item.growthRate ? `${shortTemperament(item.growthRate)} growth` : undefined}
+              meta={[
+                { icon: 'mappin', label: item.tankName || 'Unnamed tank' },
+                ...(item.placement ? [{ icon: 'square.grid.2x2', label: shortTemperament(item.placement), color: Palette.success }] : []),
+              ]}
               onPress={() => handlePress(item)}
               height={200}
               style={styles.card}

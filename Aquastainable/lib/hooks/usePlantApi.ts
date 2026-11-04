@@ -11,6 +11,19 @@ export type PlantSpecies = {
   imageSourceUrl?: string;
   imageLicense?: string;
   source?: string;
+  // Filled for plants from the common-plants catalogue.
+  description?: string;
+  bestTempC?: string;
+  phRange?: string;
+  light?: string;
+  growthRate?: string;
+  placement?: string;
+  attachment?: string;
+  careLevel?: string;
+  co2?: string;
+  origin?: string;
+  maxHeightCm?: number | null;
+  popular?: boolean;
 };
 
 export type SavedPlant = PlantSpecies & {
@@ -59,11 +72,19 @@ export function usePlantApi() {
     }
   }, [buildUrl]);
 
-  const searchPlants = useCallback(async (query: string) => {
+  // Own request (no shared loading flag) that can be cancelled, like the fish search.
+  const searchPlants = useCallback(async (query: string, signal?: AbortSignal) => {
     const trimmedQuery = query.trim();
     if (!trimmedQuery) return [];
-    return requestApi<PlantSpecies[]>('get', `/plants/search?query=${encodeURIComponent(trimmedQuery)}`);
-  }, [requestApi]);
+    try {
+      const response = await axios.get<PlantSpecies[]>(buildUrl(`/plants/search?query=${encodeURIComponent(trimmedQuery)}`), { signal });
+      return Array.isArray(response.data) ? response.data : [];
+    } catch (err) {
+      if (axios.isCancel(err)) throw err;
+      const message = axios.isAxiosError(err) ? err.response?.data?.error || err.message : 'Plant search failed.';
+      throw new Error(message);
+    }
+  }, [buildUrl]);
 
   const addPlantToTank = useCallback(async (payload: {
     userId: string;

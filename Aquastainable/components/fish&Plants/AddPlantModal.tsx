@@ -7,6 +7,8 @@ import CompatibilityResultModal from './CompatibilityResultModal';
 import { auth } from '../../firebase';
 import { useTankApi, TankRecord } from '@/lib/hooks/useTankApi';
 import { PlantSpecies, usePlantApi } from '@/lib/hooks/usePlantApi';
+import { searchPlantCatalogue } from '@/lib/plantCatalog';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 
 type Props = {
   visible: boolean;
@@ -52,24 +54,52 @@ export default function AddPlantModal({ visible, onClose }: Props) {
       .catch(() => setTanks([]));
   }, [currentUserId, getUserTanks]);
 
+  // Search as the user types:
+  // 1. Common aquarium plants are matched instantly on the phone (every letter, no network).
+  // 2. 300 ms after typing stops, the server searches online too. Older requests are cancelled.
   useEffect(() => {
     const trimmedQuery = speciesQuery.trim();
     if (!trimmedQuery || selectedPlant?.name === trimmedQuery) {
       setPlantSuggestions([]);
+      setSearchLoading(false);
       return;
     }
-    const searchAsync = async () => {
-      setSearchLoading(true);
+
+    const local = searchPlantCatalogue(trimmedQuery);
+    setPlantSuggestions(local);
+    if (trimmedQuery.length < 2) {
+      setSearchLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setSearchLoading(true);
+    const timer = setTimeout(async () => {
       try {
-        const results = await searchPlants(trimmedQuery);
-        setPlantSuggestions(Array.isArray(results) ? results : []);
+        const remote = await searchPlants(trimmedQuery, controller.signal);
+        if (controller.signal.aborted) return;
+        const remoteById = new Map(remote.map((plant) => [plant.id, plant]));
+        const merged = local.map((plant) => {
+          const match = remoteById.get(plant.id);
+          return match?.image && !plant.image ? { ...plant, image: match.image, imageSourceUrl: match.imageSourceUrl, imageLicense: match.imageLicense } : plant;
+        });
+        const known = new Set(merged.map((plant) => plant.scientificName.toLowerCase()));
+        remote.forEach((plant) => {
+          const key = (plant.scientificName || '').toLowerCase();
+          if (!known.has(key)) { known.add(key); merged.push(plant); }
+        });
+        setPlantSuggestions(merged.slice(0, 12));
       } catch {
-        setPlantSuggestions([]);
+        // Keep the instant results if the online search fails.
       } finally {
-        setSearchLoading(false);
+        if (!controller.signal.aborted) setSearchLoading(false);
       }
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
     };
-    searchAsync();
   }, [searchPlants, selectedPlant, speciesQuery]);
 
   const handlePickImage = async () => {
@@ -170,8 +200,8 @@ export default function AddPlantModal({ visible, onClose }: Props) {
         <TouchableOpacity style={styles.backdropTouchable} activeOpacity={1} onPress={onClose} />
         <View style={styles.modalCard}>
           <ScrollView contentContainerStyle={styles.content}>
-<View style={styles.headerRow}>
-            <View>
+          <View style={styles.headerRow}>
+            <View style={{ flex: 1 }}>
               <Text style={styles.title}>Add new plant</Text>
               <Text style={styles.subtitle}>Choose an image, search a plant, and assign a tank.</Text>
             </View>
@@ -197,20 +227,38 @@ export default function AddPlantModal({ visible, onClose }: Props) {
                 placeholderTextColor="#6E7684"
                 style={styles.input}
               />
-              <Text style={styles.helperText}>Search freshwater aquarium plants and choose a result.</Text>
-              {searchLoading ? <ActivityIndicator color="#4FB3CC" /> : null}
+              <View style={styles.helperRow}>
+                <Text style={styles.helperText}>{searchLoading ? 'Searching more plants online…' : 'Search by common or scientific name.'}</Text>
+                {searchLoading ? <ActivityIndicator size="small" color="#4FB3CC" /> : null}
+              </View>
               {plantSuggestions.length ? (
                 <ScrollView style={styles.suggestionsList} nestedScrollEnabled showsVerticalScrollIndicator>
-                  {plantSuggestions.slice(0, 5).map((plant) => (
+                  {plantSuggestions.map((plant) => (
                     <TouchableOpacity key={plant.id} style={styles.suggestion} onPress={() => handleSelectPlant(plant)} activeOpacity={0.8}>
-                      {plant.image ? <Image source={{ uri: plant.image }} style={styles.suggestionImage} /> : null}
+                      {plant.image ? (
+                        <Image source={{ uri: plant.image }} style={styles.suggestionImage} />
+                      ) : (
+                        <View style={[styles.suggestionImage, styles.suggestionImageEmpty]}>
+                          <IconSymbol name="leaf" size={20} color="#4ADE80" />
+                        </View>
+                      )}
                       <View style={styles.suggestionText}>
-                        <Text style={styles.suggestionName}>{plant.name}</Text>
-                        <Text style={styles.suggestionScientific}>{plant.scientificName}</Text>
+                        <View style={styles.suggestionTitleRow}>
+                          <Text style={styles.suggestionName} numberOfLines={1}>{plant.name}</Text>
+                          {plant.popular ? <Text style={styles.popularBadge}>Popular</Text> : null}
+                        </View>
+                        <Text style={styles.suggestionScientific} numberOfLines={1}>{plant.scientificName}</Text>
+                        {plant.popular ? (
+                          <Text style={styles.suggestionMeta} numberOfLines={1}>
+                            {[plant.careLevel && `${plant.careLevel} care`, plant.light && `${plant.light} light`, plant.placement].filter(Boolean).join(' · ')}
+                          </Text>
+                        ) : null}
                       </View>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
+              ) : speciesQuery.trim() && !selectedPlant && !searchLoading ? (
+                <Text style={styles.noResults}>No plants found for that search.</Text>
               ) : null}
             </View>
 
@@ -271,6 +319,7 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     flexDirection: 'row',
+    gap: 12,
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 16,
@@ -338,8 +387,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
   },
+  helperRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8, minHeight: 20 },
+  suggestionImageEmpty: { backgroundColor: 'rgba(74,222,128,0.14)', alignItems: 'center', justifyContent: 'center' },
+  suggestionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  popularBadge: { color: '#4ADE80', backgroundColor: 'rgba(74,222,128,0.14)', fontSize: 10, fontWeight: '800', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, overflow: 'hidden' },
+  suggestionMeta: { color: '#6E7684', fontSize: 11, marginTop: 3 },
+  noResults: { color: '#8F97A6', fontSize: 13, marginTop: 10 },
   helperText: {
-    marginTop: 8,
+    flex: 1,
     color: '#7B869E',
     fontSize: 12,
     lineHeight: 16,
@@ -367,6 +422,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   suggestionName: {
+    flexShrink: 1,
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',

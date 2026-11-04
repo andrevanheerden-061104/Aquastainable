@@ -64,6 +64,10 @@ const MAPPING = {
   'testtube.2': 'science',
   'cross.case': 'medical-services',
   stethoscope: 'healing',
+  fish: 'set-meal',
+  'list.bullet': 'format-list-bulleted',
+  'cube.box': 'inventory-2',
+  'square.grid.2x2': 'grid-view',
   eye: 'visibility',
   'eye.slash': 'visibility-off',
 } as IconMapping;

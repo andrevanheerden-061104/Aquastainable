@@ -1,0 +1,1563 @@
+{
+  "_about": "Top 50 most common pet aquarium fish. Searched instantly by name, alias and scientific name before any online lookup. Care values are typical hobby ranges. Fill photos with: node scripts/fill-catalogue-images.js (from the backend folder)",
+  "version": 1,
+  "fish": [
+    {
+      "id": "cf-betta",
+      "name": "Betta",
+      "aliases": [
+        "beta",
+        "beta fish",
+        "betta fish",
+        "siamese fighting fish",
+        "fighter fish"
+      ],
+      "scientificName": "Betta splendens",
+      "temperament": "Semi-aggressive",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 24,
+        "max": 28
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 7.5
+      },
+      "adultLengthCm": 6,
+      "minimumGroupSize": 1,
+      "minimumTankLitres": 20,
+      "swimLevel": "Top",
+      "lifespan": "3-5 years",
+      "origin": "Thailand, Cambodia",
+      "diet": "Carnivore: betta pellets, bloodworms, brine shrimp",
+      "description": "Colourful labyrinth fish that breathes air at the surface. Keep one male per tank and avoid fin-nippers.",
+      "image": "https://static.inaturalist.org/photos/564865375/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/564865375",
+      "imageLicense": "",
+      "source": "https://en.wikipedia.org/wiki/Siamese_fighting_fish"
+    },
+    {
+      "id": "cf-guppy",
+      "name": "Guppy",
+      "aliases": [
+        "fancy guppy",
+        "millionfish"
+      ],
+      "scientificName": "Poecilia reticulata",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 22,
+        "max": 28
+      },
+      "pH": {
+        "min": 7,
+        "max": 8
+      },
+      "adultLengthCm": 5,
+      "minimumGroupSize": 6,
+      "minimumTankLitres": 40,
+      "swimLevel": "Top & middle",
+      "lifespan": "2-3 years",
+      "origin": "South America (Venezuela, Trinidad)",
+      "diet": "Omnivore: flakes, micro pellets, daphnia",
+      "description": "Hardy, colourful livebearer that breeds easily. Great for beginners.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/634774007/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/634774007",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Guppy"
+    },
+    {
+      "id": "cf-neon-tetra",
+      "name": "Neon tetra",
+      "aliases": [
+        "neon",
+        "neon fish"
+      ],
+      "scientificName": "Paracheirodon innesi",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 21,
+        "max": 26
+      },
+      "pH": {
+        "min": 6,
+        "max": 7
+      },
+      "adultLengthCm": 4,
+      "minimumGroupSize": 8,
+      "minimumTankLitres": 40,
+      "swimLevel": "Middle",
+      "lifespan": "5-8 years",
+      "origin": "Amazon basin, South America",
+      "diet": "Omnivore: micro pellets, flakes, frozen foods",
+      "description": "Tiny schooling fish with a glowing blue and red stripe. Needs a stable, cycled tank.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/71484030/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/71484030",
+      "imageLicense": "cc-by-nc-sa",
+      "source": "https://en.wikipedia.org/wiki/Neon_tetra"
+    },
+    {
+      "id": "cf-cardinal-tetra",
+      "name": "Cardinal tetra",
+      "aliases": [
+        "cardinal"
+      ],
+      "scientificName": "Paracheirodon axelrodi",
+      "temperament": "Peaceful",
+      "careLevel": "Moderate",
+      "temperatureC": {
+        "min": 23,
+        "max": 29
+      },
+      "pH": {
+        "min": 5,
+        "max": 7
+      },
+      "adultLengthCm": 5,
+      "minimumGroupSize": 8,
+      "minimumTankLitres": 60,
+      "swimLevel": "Middle",
+      "lifespan": "4-5 years",
+      "origin": "Rio Negro and Orinoco, South America",
+      "diet": "Omnivore: micro pellets, flakes, bloodworms",
+      "description": "Like a neon tetra but with red along the whole belly. Prefers soft, slightly acidic water.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/354211778/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/354211778",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Cardinal_tetra"
+    },
+    {
+      "id": "cf-goldfish",
+      "name": "Goldfish",
+      "aliases": [
+        "fancy goldfish",
+        "comet goldfish",
+        "oranda",
+        "fantail"
+      ],
+      "scientificName": "Carassius auratus",
+      "temperament": "Peaceful",
+      "careLevel": "Moderate",
+      "temperatureC": {
+        "min": 18,
+        "max": 23
+      },
+      "pH": {
+        "min": 7,
+        "max": 8
+      },
+      "adultLengthCm": 20,
+      "minimumGroupSize": 2,
+      "minimumTankLitres": 150,
+      "swimLevel": "All levels",
+      "lifespan": "10-20 years",
+      "origin": "East Asia (China)",
+      "diet": "Omnivore: sinking goldfish pellets, vegetables, gel food",
+      "description": "Cool-water fish that grows big and makes a lot of waste. Needs a large tank and strong filter.",
+      "image": "https://static.inaturalist.org/photos/203973907/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/203973907",
+      "imageLicense": "",
+      "source": "https://en.wikipedia.org/wiki/Goldfish"
+    },
+    {
+      "id": "cf-molly",
+      "name": "Molly",
+      "aliases": [
+        "mollies",
+        "black molly",
+        "sailfin molly",
+        "common molly"
+      ],
+      "scientificName": "Poecilia sphenops",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 24,
+        "max": 28
+      },
+      "pH": {
+        "min": 7.5,
+        "max": 8.5
+      },
+      "adultLengthCm": 8,
+      "minimumGroupSize": 4,
+      "minimumTankLitres": 80,
+      "swimLevel": "Top & middle",
+      "lifespan": "3-5 years",
+      "origin": "Central America, Mexico",
+      "diet": "Omnivore: flakes, algae wafers, vegetables",
+      "description": "Hardy livebearer that likes harder water and grazes on algae.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/208075679/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/208075679",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Poecilia_sphenops"
+    },
+    {
+      "id": "cf-platy",
+      "name": "Platy",
+      "aliases": [
+        "platies",
+        "southern platy",
+        "platyfish"
+      ],
+      "scientificName": "Xiphophorus maculatus",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 20,
+        "max": 26
+      },
+      "pH": {
+        "min": 7,
+        "max": 8
+      },
+      "adultLengthCm": 5,
+      "minimumGroupSize": 4,
+      "minimumTankLitres": 40,
+      "swimLevel": "Middle",
+      "lifespan": "2-3 years",
+      "origin": "Mexico, Central America",
+      "diet": "Omnivore: flakes, micro pellets, vegetables",
+      "description": "Cheerful, easy livebearer in many colours. Good community fish.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/246740667/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/246740667",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Southern_platyfish"
+    },
+    {
+      "id": "cf-swordtail",
+      "name": "Swordtail",
+      "aliases": [
+        "green swordtail",
+        "sword tail"
+      ],
+      "scientificName": "Xiphophorus hellerii",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 22,
+        "max": 28
+      },
+      "pH": {
+        "min": 7,
+        "max": 8
+      },
+      "adultLengthCm": 12,
+      "minimumGroupSize": 4,
+      "minimumTankLitres": 80,
+      "swimLevel": "Top & middle",
+      "lifespan": "3-5 years",
+      "origin": "Mexico, Central America",
+      "diet": "Omnivore: flakes, pellets, vegetables",
+      "description": "Active livebearer; males grow a long sword-shaped tail fin.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/6784519/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/6784519",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Green_swordtail"
+    },
+    {
+      "id": "cf-zebra-danio",
+      "name": "Zebra danio",
+      "aliases": [
+        "zebrafish",
+        "zebra fish",
+        "danio"
+      ],
+      "scientificName": "Danio rerio",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 18,
+        "max": 25
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 7.5
+      },
+      "adultLengthCm": 4,
+      "minimumGroupSize": 6,
+      "minimumTankLitres": 40,
+      "swimLevel": "Top",
+      "lifespan": "3-5 years",
+      "origin": "South Asia (India, Bangladesh)",
+      "diet": "Omnivore: flakes, micro pellets, daphnia",
+      "description": "Fast, hardy striped fish that loves open swimming space.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/11066492/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/11066492",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Zebrafish"
+    },
+    {
+      "id": "cf-angelfish",
+      "name": "Angelfish",
+      "aliases": [
+        "angel fish",
+        "freshwater angelfish"
+      ],
+      "scientificName": "Pterophyllum scalare",
+      "temperament": "Semi-aggressive",
+      "careLevel": "Moderate",
+      "temperatureC": {
+        "min": 24,
+        "max": 30
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "adultLengthCm": 15,
+      "minimumGroupSize": 1,
+      "minimumTankLitres": 120,
+      "swimLevel": "Middle",
+      "lifespan": "10 years",
+      "origin": "Amazon basin, South America",
+      "diet": "Omnivore: flakes, pellets, bloodworms",
+      "description": "Tall, elegant cichlid. May eat very small fish like neons once fully grown.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/138657562/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/138657562",
+      "imageLicense": "cc-by",
+      "source": "https://en.wikipedia.org/wiki/Pterophyllum_scalare"
+    },
+    {
+      "id": "cf-bronze-corydoras",
+      "name": "Bronze corydoras",
+      "aliases": [
+        "bronze cory",
+        "cory",
+        "corydoras",
+        "cory catfish"
+      ],
+      "scientificName": "Corydoras aeneus",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 22,
+        "max": 27
+      },
+      "pH": {
+        "min": 6,
+        "max": 8
+      },
+      "adultLengthCm": 7,
+      "minimumGroupSize": 6,
+      "minimumTankLitres": 60,
+      "swimLevel": "Bottom",
+      "lifespan": "5-10 years",
+      "origin": "South America",
+      "diet": "Omnivore: sinking pellets, wafers, bloodworms",
+      "description": "Friendly bottom-dwelling catfish that sifts sand for food. Keep in groups on soft sand.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/347207428/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/347207428",
+      "imageLicense": "cc-by",
+      "source": "https://en.wikipedia.org/wiki/Corydoras_aeneus"
+    },
+    {
+      "id": "cf-panda-corydoras",
+      "name": "Panda corydoras",
+      "aliases": [
+        "panda cory",
+        "panda catfish"
+      ],
+      "scientificName": "Corydoras panda",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 20,
+        "max": 25
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "adultLengthCm": 5,
+      "minimumGroupSize": 6,
+      "minimumTankLitres": 40,
+      "swimLevel": "Bottom",
+      "lifespan": "5-10 years",
+      "origin": "Peru",
+      "diet": "Omnivore: sinking pellets, wafers, bloodworms",
+      "description": "Small cory with panda-like black patches. Prefers cooler, clean water.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/80666009/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/80666009",
+      "imageLicense": "cc-by",
+      "source": "https://en.wikipedia.org/wiki/Corydoras_panda"
+    },
+    {
+      "id": "cf-harlequin-rasbora",
+      "name": "Harlequin rasbora",
+      "aliases": [
+        "harlequin",
+        "rasbora"
+      ],
+      "scientificName": "Trigonostigma heteromorpha",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 22,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "adultLengthCm": 5,
+      "minimumGroupSize": 8,
+      "minimumTankLitres": 40,
+      "swimLevel": "Middle",
+      "lifespan": "5-8 years",
+      "origin": "Southeast Asia (Malaysia, Thailand)",
+      "diet": "Omnivore: flakes, micro pellets, frozen foods",
+      "description": "Peaceful schooling fish with a black triangle patch. Great in planted tanks.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/358133948/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/358133948",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Harlequin_rasbora"
+    },
+    {
+      "id": "cf-cherry-barb",
+      "name": "Cherry barb",
+      "aliases": [
+        "cherry"
+      ],
+      "scientificName": "Puntius titteya",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 23,
+        "max": 27
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "adultLengthCm": 5,
+      "minimumGroupSize": 6,
+      "minimumTankLitres": 60,
+      "swimLevel": "Middle",
+      "lifespan": "4-6 years",
+      "origin": "Sri Lanka",
+      "diet": "Omnivore: flakes, micro pellets, daphnia",
+      "description": "Calm barb; males turn bright cherry red. Not a fin-nipper.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/11065658/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/11065658",
+      "imageLicense": "pd",
+      "source": "https://en.wikipedia.org/wiki/Cherry_barb"
+    },
+    {
+      "id": "cf-tiger-barb",
+      "name": "Tiger barb",
+      "aliases": [
+        "tiger"
+      ],
+      "scientificName": "Puntigrus tetrazona",
+      "temperament": "Semi-aggressive",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 22,
+        "max": 27
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "adultLengthCm": 7,
+      "minimumGroupSize": 6,
+      "minimumTankLitres": 80,
+      "swimLevel": "Middle",
+      "lifespan": "5-7 years",
+      "origin": "Indonesia (Sumatra, Borneo)",
+      "diet": "Omnivore: flakes, pellets, frozen foods",
+      "description": "Bold, active striped barb. Keep in a big group or it nips long fins.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/208072283/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/208072283",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Tiger_barb"
+    },
+    {
+      "id": "cf-dwarf-gourami",
+      "name": "Dwarf gourami",
+      "aliases": [
+        "gourami",
+        "flame gourami",
+        "powder blue gourami"
+      ],
+      "scientificName": "Trichogaster lalius",
+      "temperament": "Peaceful",
+      "careLevel": "Moderate",
+      "temperatureC": {
+        "min": 24,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "adultLengthCm": 8,
+      "minimumGroupSize": 1,
+      "minimumTankLitres": 40,
+      "swimLevel": "Top & middle",
+      "lifespan": "4 years",
+      "origin": "South Asia (India, Bangladesh)",
+      "diet": "Omnivore: flakes, pellets, bloodworms",
+      "description": "Bright labyrinth fish. Keep one male; buy from a good source as they can carry disease.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/118550776/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/118550776",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Dwarf_gourami"
+    },
+    {
+      "id": "cf-pearl-gourami",
+      "name": "Pearl gourami",
+      "aliases": [
+        "lace gourami",
+        "mosaic gourami"
+      ],
+      "scientificName": "Trichopodus leerii",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 24,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 8
+      },
+      "adultLengthCm": 12,
+      "minimumGroupSize": 1,
+      "minimumTankLitres": 100,
+      "swimLevel": "Top & middle",
+      "lifespan": "5-8 years",
+      "origin": "Southeast Asia (Malaysia, Indonesia)",
+      "diet": "Omnivore: flakes, pellets, frozen foods",
+      "description": "Peaceful gourami covered in pearly spots. Likes plants and calm water.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/80647353/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/80647353",
+      "imageLicense": "cc-by-sa",
+      "source": "https://en.wikipedia.org/wiki/Pearl_gourami"
+    },
+    {
+      "id": "cf-honey-gourami",
+      "name": "Honey gourami",
+      "aliases": [
+        "honey"
+      ],
+      "scientificName": "Trichogaster chuna",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 22,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "adultLengthCm": 5,
+      "minimumGroupSize": 1,
+      "minimumTankLitres": 40,
+      "swimLevel": "Top",
+      "lifespan": "4-8 years",
+      "origin": "India, Bangladesh",
+      "diet": "Omnivore: flakes, micro pellets, daphnia",
+      "description": "Small, shy golden gourami. Good choice for small community tanks.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/96911304/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/96911304",
+      "imageLicense": "cc-by-sa",
+      "source": "https://en.wikipedia.org/wiki/Honey_gourami"
+    },
+    {
+      "id": "cf-bristlenose-pleco",
+      "name": "Bristlenose pleco",
+      "aliases": [
+        "bristlenose",
+        "pleco",
+        "bushynose pleco",
+        "bristlenose catfish"
+      ],
+      "scientificName": "Ancistrus cirrhosus",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 22,
+        "max": 27
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 7.5
+      },
+      "adultLengthCm": 13,
+      "minimumGroupSize": 1,
+      "minimumTankLitres": 80,
+      "swimLevel": "Bottom",
+      "lifespan": "10-12 years",
+      "origin": "South America",
+      "diet": "Herbivore: algae wafers, vegetables, driftwood",
+      "description": "The best pleco for home tanks: stays small and eats algae. Needs driftwood to graze.",
+      "image": "https://static.inaturalist.org/photos/242581996/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/242581996",
+      "imageLicense": "",
+      "source": "https://en.wikipedia.org/wiki/Ancistrus"
+    },
+    {
+      "id": "cf-common-pleco",
+      "name": "Common pleco",
+      "aliases": [
+        "sailfin pleco",
+        "plecostomus",
+        "suckermouth"
+      ],
+      "scientificName": "Pterygoplichthys pardalis",
+      "temperament": "Peaceful",
+      "careLevel": "Moderate",
+      "temperatureC": {
+        "min": 23,
+        "max": 28
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 7.5
+      },
+      "adultLengthCm": 40,
+      "minimumGroupSize": 1,
+      "minimumTankLitres": 400,
+      "swimLevel": "Bottom",
+      "lifespan": "15-20 years",
+      "origin": "Amazon basin, South America",
+      "diet": "Herbivore: algae wafers, vegetables, wood",
+      "description": "Often sold small but grows very large. Only for very big tanks.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/51356375/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/51356375",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Amazon_sailfin_catfish"
+    },
+    {
+      "id": "cf-otocinclus",
+      "name": "Otocinclus",
+      "aliases": [
+        "oto",
+        "otos",
+        "dwarf sucker"
+      ],
+      "scientificName": "Otocinclus vittatus",
+      "temperament": "Peaceful",
+      "careLevel": "Moderate",
+      "temperatureC": {
+        "min": 22,
+        "max": 26
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "adultLengthCm": 4,
+      "minimumGroupSize": 6,
+      "minimumTankLitres": 40,
+      "swimLevel": "Bottom",
+      "lifespan": "3-5 years",
+      "origin": "South America",
+      "diet": "Herbivore: algae, algae wafers, blanched zucchini",
+      "description": "Tiny algae eater for planted tanks. Add only to a mature tank with algae.",
+      "image": "https://static.inaturalist.org/photos/372813865/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/372813865",
+      "imageLicense": "",
+      "source": "https://en.wikipedia.org/wiki/Otocinclus"
+    },
+    {
+      "id": "cf-kuhli-loach",
+      "name": "Kuhli loach",
+      "aliases": [
+        "coolie loach",
+        "kuhli"
+      ],
+      "scientificName": "Pangio kuhlii",
+      "temperament": "Peaceful",
+      "careLevel": "Moderate",
+      "temperatureC": {
+        "min": 24,
+        "max": 30
+      },
+      "pH": {
+        "min": 5.5,
+        "max": 7
+      },
+      "adultLengthCm": 10,
+      "minimumGroupSize": 6,
+      "minimumTankLitres": 80,
+      "swimLevel": "Bottom",
+      "lifespan": "10 years",
+      "origin": "Southeast Asia (Indonesia, Malaysia)",
+      "diet": "Omnivore: sinking pellets, bloodworms",
+      "description": "Eel-like loach that hides in sand. More active in groups and dim light.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/71715847/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/71715847",
+      "imageLicense": "cc-by-sa",
+      "source": "https://en.wikipedia.org/wiki/Kuhli_loach"
+    },
+    {
+      "id": "cf-clown-loach",
+      "name": "Clown loach",
+      "aliases": [
+        "clown"
+      ],
+      "scientificName": "Chromobotia macracanthus",
+      "temperament": "Peaceful",
+      "careLevel": "Moderate",
+      "temperatureC": {
+        "min": 25,
+        "max": 30
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "adultLengthCm": 30,
+      "minimumGroupSize": 5,
+      "minimumTankLitres": 400,
+      "swimLevel": "Bottom",
+      "lifespan": "20 years",
+      "origin": "Indonesia (Borneo, Sumatra)",
+      "diet": "Omnivore: sinking pellets, snails, bloodworms",
+      "description": "Playful striped loach that eats snails. Grows big and needs a group.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/15090592/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/15090592",
+      "imageLicense": "cc-by-nc-sa",
+      "source": "https://en.wikipedia.org/wiki/Clown_loach"
+    },
+    {
+      "id": "cf-white-cloud-minnow",
+      "name": "White cloud minnow",
+      "aliases": [
+        "white cloud",
+        "white cloud mountain minnow"
+      ],
+      "scientificName": "Tanichthys albonubes",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 16,
+        "max": 22
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 8
+      },
+      "adultLengthCm": 4,
+      "minimumGroupSize": 6,
+      "minimumTankLitres": 40,
+      "swimLevel": "Top & middle",
+      "lifespan": "5 years",
+      "origin": "China",
+      "diet": "Omnivore: flakes, micro pellets, daphnia",
+      "description": "Hardy cool-water fish. Great for unheated tanks.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/85092650/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/85092650",
+      "imageLicense": "cc-by-sa",
+      "source": "https://en.wikipedia.org/wiki/White_cloud_mountain_minnow"
+    },
+    {
+      "id": "cf-black-skirt-tetra",
+      "name": "Black skirt tetra",
+      "aliases": [
+        "black tetra",
+        "black widow tetra"
+      ],
+      "scientificName": "Gymnocorymbus ternetzi",
+      "temperament": "Semi-aggressive",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 22,
+        "max": 26
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "adultLengthCm": 6,
+      "minimumGroupSize": 6,
+      "minimumTankLitres": 60,
+      "swimLevel": "Middle",
+      "lifespan": "3-5 years",
+      "origin": "South America (Paraguay, Brazil)",
+      "diet": "Omnivore: flakes, micro pellets",
+      "description": "Hardy tetra with a dark flowing skirt. May nip long fins.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/311139004/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/311139004",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Black_tetra"
+    },
+    {
+      "id": "cf-serpae-tetra",
+      "name": "Serpae tetra",
+      "aliases": [
+        "serpae",
+        "red minor tetra"
+      ],
+      "scientificName": "Hyphessobrycon eques",
+      "temperament": "Semi-aggressive",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 22,
+        "max": 27
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "adultLengthCm": 4,
+      "minimumGroupSize": 6,
+      "minimumTankLitres": 60,
+      "swimLevel": "Middle",
+      "lifespan": "5-7 years",
+      "origin": "Amazon basin, South America",
+      "diet": "Omnivore: flakes, micro pellets",
+      "description": "Bright red tetra. Known for nipping fins if kept in small groups.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/11070307/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/11070307",
+      "imageLicense": "pd",
+      "source": "https://en.wikipedia.org/wiki/Serpae_tetra"
+    },
+    {
+      "id": "cf-ember-tetra",
+      "name": "Ember tetra",
+      "aliases": [
+        "ember"
+      ],
+      "scientificName": "Hyphessobrycon amandae",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 24,
+        "max": 28
+      },
+      "pH": {
+        "min": 5.5,
+        "max": 7
+      },
+      "adultLengthCm": 2,
+      "minimumGroupSize": 8,
+      "minimumTankLitres": 30,
+      "swimLevel": "Middle",
+      "lifespan": "2-4 years",
+      "origin": "Brazil",
+      "diet": "Omnivore: micro pellets, crushed flakes",
+      "description": "Tiny orange tetra that glows in planted tanks. Perfect for nano tanks.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/90886437/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/90886437",
+      "imageLicense": "cc-by-nc-nd",
+      "source": "https://en.wikipedia.org/wiki/Ember_tetra"
+    },
+    {
+      "id": "cf-rummy-nose-tetra",
+      "name": "Rummy-nose tetra",
+      "aliases": [
+        "rummynose",
+        "rummy nose"
+      ],
+      "scientificName": "Hemigrammus rhodostomus",
+      "temperament": "Peaceful",
+      "careLevel": "Moderate",
+      "temperatureC": {
+        "min": 24,
+        "max": 28
+      },
+      "pH": {
+        "min": 5.5,
+        "max": 7
+      },
+      "adultLengthCm": 5,
+      "minimumGroupSize": 8,
+      "minimumTankLitres": 80,
+      "swimLevel": "Middle",
+      "lifespan": "5-6 years",
+      "origin": "Amazon basin, South America",
+      "diet": "Omnivore: micro pellets, flakes, frozen foods",
+      "description": "Tight-schooling tetra with a red nose. Its colour fades when water quality drops.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/84949518/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/84949518",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Rummy-nose_tetra"
+    },
+    {
+      "id": "cf-glowlight-tetra",
+      "name": "Glowlight tetra",
+      "aliases": [
+        "glowlight"
+      ],
+      "scientificName": "Hemigrammus erythrozonus",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 24,
+        "max": 28
+      },
+      "pH": {
+        "min": 5.5,
+        "max": 7.5
+      },
+      "adultLengthCm": 4,
+      "minimumGroupSize": 8,
+      "minimumTankLitres": 40,
+      "swimLevel": "Middle",
+      "lifespan": "5 years",
+      "origin": "Guyana",
+      "diet": "Omnivore: flakes, micro pellets",
+      "description": "Peaceful tetra with a glowing orange line. Very good community fish.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/60778702/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/60778702",
+      "imageLicense": "cc-by",
+      "source": "https://en.wikipedia.org/wiki/Glowlight_tetra"
+    },
+    {
+      "id": "cf-lemon-tetra",
+      "name": "Lemon tetra",
+      "aliases": [
+        "lemon"
+      ],
+      "scientificName": "Hyphessobrycon pulchripinnis",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 22,
+        "max": 28
+      },
+      "pH": {
+        "min": 5.5,
+        "max": 7.5
+      },
+      "adultLengthCm": 5,
+      "minimumGroupSize": 8,
+      "minimumTankLitres": 60,
+      "swimLevel": "Middle",
+      "lifespan": "5-8 years",
+      "origin": "Brazil",
+      "diet": "Omnivore: flakes, micro pellets",
+      "description": "Pale yellow tetra with yellow and black fins. Hardy and calm.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/2085783/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/2085783",
+      "imageLicense": "cc-by-sa",
+      "source": "https://en.wikipedia.org/wiki/Lemon_tetra"
+    },
+    {
+      "id": "cf-congo-tetra",
+      "name": "Congo tetra",
+      "aliases": [
+        "congo"
+      ],
+      "scientificName": "Phenacogrammus interruptus",
+      "temperament": "Peaceful",
+      "careLevel": "Moderate",
+      "temperatureC": {
+        "min": 24,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "adultLengthCm": 8,
+      "minimumGroupSize": 6,
+      "minimumTankLitres": 120,
+      "swimLevel": "Middle",
+      "lifespan": "3-5 years",
+      "origin": "Congo River, Africa",
+      "diet": "Omnivore: flakes, pellets, frozen foods",
+      "description": "Large, shimmering African tetra with flowing fins. Needs swimming room.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/57569315/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/57569315",
+      "imageLicense": "cc-by-sa",
+      "source": "https://en.wikipedia.org/wiki/Congo_tetra"
+    },
+    {
+      "id": "cf-discus",
+      "name": "Discus",
+      "aliases": [
+        "discus fish",
+        "pompadour"
+      ],
+      "scientificName": "Symphysodon aequifasciatus",
+      "temperament": "Peaceful",
+      "careLevel": "Hard",
+      "temperatureC": {
+        "min": 28,
+        "max": 31
+      },
+      "pH": {
+        "min": 5,
+        "max": 7
+      },
+      "adultLengthCm": 15,
+      "minimumGroupSize": 5,
+      "minimumTankLitres": 250,
+      "swimLevel": "Middle",
+      "lifespan": "10-15 years",
+      "origin": "Amazon basin, South America",
+      "diet": "Carnivore: discus pellets, bloodworms, beef heart mix",
+      "description": "The king of the aquarium. Needs very warm, soft, very clean water and frequent water changes.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/111080733/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/111080733",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Symphysodon"
+    },
+    {
+      "id": "cf-oscar",
+      "name": "Oscar",
+      "aliases": [
+        "oscar fish",
+        "tiger oscar"
+      ],
+      "scientificName": "Astronotus ocellatus",
+      "temperament": "Aggressive",
+      "careLevel": "Moderate",
+      "temperatureC": {
+        "min": 23,
+        "max": 27
+      },
+      "pH": {
+        "min": 6,
+        "max": 8
+      },
+      "adultLengthCm": 30,
+      "minimumGroupSize": 1,
+      "minimumTankLitres": 300,
+      "swimLevel": "All levels",
+      "lifespan": "10-15 years",
+      "origin": "Amazon basin, South America",
+      "diet": "Carnivore: cichlid pellets, insects, shrimp",
+      "description": "Big, smart cichlid with lots of personality. Eats small fish and needs a huge tank.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/533128/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/533128",
+      "imageLicense": "cc-by-sa",
+      "source": "https://en.wikipedia.org/wiki/Oscar_(fish)"
+    },
+    {
+      "id": "cf-german-blue-ram",
+      "name": "German blue ram",
+      "aliases": [
+        "ram",
+        "blue ram",
+        "ram cichlid"
+      ],
+      "scientificName": "Mikrogeophagus ramirezi",
+      "temperament": "Peaceful",
+      "careLevel": "Hard",
+      "temperatureC": {
+        "min": 27,
+        "max": 30
+      },
+      "pH": {
+        "min": 5,
+        "max": 7
+      },
+      "adultLengthCm": 5,
+      "minimumGroupSize": 2,
+      "minimumTankLitres": 60,
+      "swimLevel": "Bottom & middle",
+      "lifespan": "2-3 years",
+      "origin": "Venezuela, Colombia",
+      "diet": "Omnivore: small pellets, bloodworms, brine shrimp",
+      "description": "Beautiful dwarf cichlid that needs warm, soft, very stable water.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/67141787/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/67141787",
+      "imageLicense": "cc-by-nc-sa",
+      "source": "https://en.wikipedia.org/wiki/Mikrogeophagus_ramirezi"
+    },
+    {
+      "id": "cf-bolivian-ram",
+      "name": "Bolivian ram",
+      "aliases": [
+        "bolivian butterfly cichlid"
+      ],
+      "scientificName": "Mikrogeophagus altispinosus",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 22,
+        "max": 26
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "adultLengthCm": 8,
+      "minimumGroupSize": 2,
+      "minimumTankLitres": 80,
+      "swimLevel": "Bottom & middle",
+      "lifespan": "4-6 years",
+      "origin": "Bolivia, Brazil",
+      "diet": "Omnivore: sinking pellets, bloodworms",
+      "description": "Hardier cousin of the blue ram. Peaceful cichlid for community tanks.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/11371936/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/11371936",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Mikrogeophagus_altispinosus"
+    },
+    {
+      "id": "cf-kribensis",
+      "name": "Kribensis",
+      "aliases": [
+        "krib",
+        "kribs"
+      ],
+      "scientificName": "Pelvicachromis pulcher",
+      "temperament": "Semi-aggressive",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 24,
+        "max": 27
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "adultLengthCm": 10,
+      "minimumGroupSize": 2,
+      "minimumTankLitres": 80,
+      "swimLevel": "Bottom",
+      "lifespan": "5 years",
+      "origin": "Nigeria, Cameroon",
+      "diet": "Omnivore: sinking pellets, flakes, frozen foods",
+      "description": "Colourful West African dwarf cichlid. Pairs guard their fry and get territorial.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/96239419/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/96239419",
+      "imageLicense": "cc-by-sa",
+      "source": "https://en.wikipedia.org/wiki/Pelvicachromis_pulcher"
+    },
+    {
+      "id": "cf-convict-cichlid",
+      "name": "Convict cichlid",
+      "aliases": [
+        "convict"
+      ],
+      "scientificName": "Amatitlania nigrofasciata",
+      "temperament": "Aggressive",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 20,
+        "max": 28
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 8
+      },
+      "adultLengthCm": 12,
+      "minimumGroupSize": 2,
+      "minimumTankLitres": 120,
+      "swimLevel": "All levels",
+      "lifespan": "8-10 years",
+      "origin": "Central America",
+      "diet": "Omnivore: cichlid pellets, flakes",
+      "description": "Tough striped cichlid that breeds readily and defends its area hard.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/81863630/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/81863630",
+      "imageLicense": "cc-by",
+      "source": "https://en.wikipedia.org/wiki/Convict_cichlid"
+    },
+    {
+      "id": "cf-electric-yellow-cichlid",
+      "name": "Electric yellow cichlid",
+      "aliases": [
+        "yellow lab",
+        "electric yellow",
+        "lemon yellow lab"
+      ],
+      "scientificName": "Labidochromis caeruleus",
+      "temperament": "Semi-aggressive",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 24,
+        "max": 28
+      },
+      "pH": {
+        "min": 7.5,
+        "max": 8.5
+      },
+      "adultLengthCm": 10,
+      "minimumGroupSize": 5,
+      "minimumTankLitres": 200,
+      "swimLevel": "All levels",
+      "lifespan": "6-10 years",
+      "origin": "Lake Malawi, Africa",
+      "diet": "Omnivore: cichlid pellets, spirulina",
+      "description": "Bright yellow Malawi cichlid. One of the calmer mbuna for African tanks.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/71733761/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/71733761",
+      "imageLicense": "cc-by-nd",
+      "source": "https://en.wikipedia.org/wiki/Labidochromis_caeruleus"
+    },
+    {
+      "id": "cf-cockatoo-dwarf-cichlid",
+      "name": "Cockatoo dwarf cichlid",
+      "aliases": [
+        "apistogramma",
+        "apisto",
+        "cockatoo cichlid"
+      ],
+      "scientificName": "Apistogramma cacatuoides",
+      "temperament": "Semi-aggressive",
+      "careLevel": "Moderate",
+      "temperatureC": {
+        "min": 24,
+        "max": 29
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "adultLengthCm": 8,
+      "minimumGroupSize": 2,
+      "minimumTankLitres": 60,
+      "swimLevel": "Bottom",
+      "lifespan": "5 years",
+      "origin": "Peru, Colombia",
+      "diet": "Carnivore: small pellets, bloodworms, brine shrimp",
+      "description": "Small cichlid with a spiky fin crest. Likes caves and leaf litter.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/94477007/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/94477007",
+      "imageLicense": "cc-by",
+      "source": "https://en.wikipedia.org/wiki/Apistogramma_cacatuoides"
+    },
+    {
+      "id": "cf-endler-s-livebearer",
+      "name": "Endler's livebearer",
+      "aliases": [
+        "endler",
+        "endlers",
+        "endler guppy"
+      ],
+      "scientificName": "Poecilia wingei",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 24,
+        "max": 30
+      },
+      "pH": {
+        "min": 7,
+        "max": 8
+      },
+      "adultLengthCm": 3,
+      "minimumGroupSize": 6,
+      "minimumTankLitres": 30,
+      "swimLevel": "Top & middle",
+      "lifespan": "2-3 years",
+      "origin": "Venezuela",
+      "diet": "Omnivore: micro pellets, flakes",
+      "description": "Tiny, very bright relative of the guppy. Perfect for small tanks.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/87513229/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/87513229",
+      "imageLicense": "cc-by-sa",
+      "source": "https://en.wikipedia.org/wiki/Poecilia_wingei"
+    },
+    {
+      "id": "cf-celestial-pearl-danio",
+      "name": "Celestial pearl danio",
+      "aliases": [
+        "galaxy rasbora",
+        "cpd",
+        "galaxy"
+      ],
+      "scientificName": "Danio margaritatus",
+      "temperament": "Peaceful",
+      "careLevel": "Moderate",
+      "temperatureC": {
+        "min": 20,
+        "max": 25
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 7.5
+      },
+      "adultLengthCm": 2,
+      "minimumGroupSize": 8,
+      "minimumTankLitres": 30,
+      "swimLevel": "Middle",
+      "lifespan": "3-5 years",
+      "origin": "Myanmar",
+      "diet": "Omnivore: micro pellets, daphnia, brine shrimp",
+      "description": "Tiny spotted fish for planted nano tanks. Shy at first.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/678036400/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/678036400",
+      "imageLicense": "cc-by-nc-nd",
+      "source": "https://en.wikipedia.org/wiki/Celestial_pearl_danio"
+    },
+    {
+      "id": "cf-chili-rasbora",
+      "name": "Chili rasbora",
+      "aliases": [
+        "mosquito rasbora",
+        "chili"
+      ],
+      "scientificName": "Boraras brigittae",
+      "temperament": "Peaceful",
+      "careLevel": "Moderate",
+      "temperatureC": {
+        "min": 24,
+        "max": 28
+      },
+      "pH": {
+        "min": 5,
+        "max": 7
+      },
+      "adultLengthCm": 2,
+      "minimumGroupSize": 10,
+      "minimumTankLitres": 20,
+      "swimLevel": "Middle",
+      "lifespan": "4-8 years",
+      "origin": "Borneo, Indonesia",
+      "diet": "Omnivore: micro foods, crushed flakes, baby brine shrimp",
+      "description": "One of the smallest aquarium fish. Bright red in a dark, planted tank.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/17503267/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/17503267",
+      "imageLicense": "cc-by-sa",
+      "source": "https://en.wikipedia.org/wiki/Boraras_brigittae"
+    },
+    {
+      "id": "cf-rosy-barb",
+      "name": "Rosy barb",
+      "aliases": [
+        "rosy"
+      ],
+      "scientificName": "Pethia conchonius",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 18,
+        "max": 25
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 7.5
+      },
+      "adultLengthCm": 10,
+      "minimumGroupSize": 6,
+      "minimumTankLitres": 100,
+      "swimLevel": "Middle",
+      "lifespan": "5 years",
+      "origin": "India, Bangladesh",
+      "diet": "Omnivore: flakes, pellets, vegetables",
+      "description": "Hardy, active barb that does well in cooler water.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/93762835/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/93762835",
+      "imageLicense": "pd",
+      "source": "https://en.wikipedia.org/wiki/Rosy_barb"
+    },
+    {
+      "id": "cf-siamese-algae-eater",
+      "name": "Siamese algae eater",
+      "aliases": [
+        "sae",
+        "algae eater"
+      ],
+      "scientificName": "Crossocheilus oblongus",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 24,
+        "max": 26
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 7.5
+      },
+      "adultLengthCm": 15,
+      "minimumGroupSize": 1,
+      "minimumTankLitres": 120,
+      "swimLevel": "Bottom & middle",
+      "lifespan": "10 years",
+      "origin": "Southeast Asia",
+      "diet": "Omnivore: algae, wafers, vegetables",
+      "description": "Top algae eater, even for black beard algae. Needs room as it grows.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/332519032/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/332519032",
+      "imageLicense": "cc-by-sa",
+      "source": "https://en.wikipedia.org/wiki/Siamese_algae_eater"
+    },
+    {
+      "id": "cf-rainbow-shark",
+      "name": "Rainbow shark",
+      "aliases": [
+        "ruby shark"
+      ],
+      "scientificName": "Epalzeorhynchos frenatum",
+      "temperament": "Semi-aggressive",
+      "careLevel": "Moderate",
+      "temperatureC": {
+        "min": 24,
+        "max": 27
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 7.5
+      },
+      "adultLengthCm": 15,
+      "minimumGroupSize": 1,
+      "minimumTankLitres": 200,
+      "swimLevel": "Bottom",
+      "lifespan": "5-8 years",
+      "origin": "Thailand, Mekong basin",
+      "diet": "Omnivore: sinking pellets, algae wafers",
+      "description": "Dark body with red fins. Territorial: keep only one.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/138797483/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/138797483",
+      "imageLicense": "cc-by-sa",
+      "source": "https://en.wikipedia.org/wiki/Rainbow_shark"
+    },
+    {
+      "id": "cf-red-tailed-black-shark",
+      "name": "Red-tailed black shark",
+      "aliases": [
+        "red tail shark"
+      ],
+      "scientificName": "Epalzeorhynchos bicolor",
+      "temperament": "Semi-aggressive",
+      "careLevel": "Moderate",
+      "temperatureC": {
+        "min": 22,
+        "max": 26
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 7.5
+      },
+      "adultLengthCm": 15,
+      "minimumGroupSize": 1,
+      "minimumTankLitres": 200,
+      "swimLevel": "Bottom",
+      "lifespan": "5-8 years",
+      "origin": "Thailand",
+      "diet": "Omnivore: sinking pellets, algae wafers",
+      "description": "Velvet black fish with a bright red tail. Chases fish that look like it.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/39794398/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/39794398",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Red_tail_black_shark"
+    },
+    {
+      "id": "cf-boesemani-rainbowfish",
+      "name": "Boesemani rainbowfish",
+      "aliases": [
+        "boesemani",
+        "rainbowfish",
+        "bosemani"
+      ],
+      "scientificName": "Melanotaenia boesemani",
+      "temperament": "Peaceful",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 26,
+        "max": 30
+      },
+      "pH": {
+        "min": 7,
+        "max": 8
+      },
+      "adultLengthCm": 10,
+      "minimumGroupSize": 6,
+      "minimumTankLitres": 200,
+      "swimLevel": "Top & middle",
+      "lifespan": "5-8 years",
+      "origin": "West Papua, Indonesia",
+      "diet": "Omnivore: flakes, pellets, frozen foods",
+      "description": "Half blue, half orange rainbowfish. Active schooler that needs a long tank.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/11070537/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/11070537",
+      "imageLicense": "cc-by-nc-sa",
+      "source": "https://en.wikipedia.org/wiki/Melanotaenia_boesemani"
+    },
+    {
+      "id": "cf-paradise-fish",
+      "name": "Paradise fish",
+      "aliases": [
+        "paradise"
+      ],
+      "scientificName": "Macropodus opercularis",
+      "temperament": "Aggressive",
+      "careLevel": "Easy",
+      "temperatureC": {
+        "min": 16,
+        "max": 26
+      },
+      "pH": {
+        "min": 6,
+        "max": 8
+      },
+      "adultLengthCm": 10,
+      "minimumGroupSize": 1,
+      "minimumTankLitres": 80,
+      "swimLevel": "Top",
+      "lifespan": "8-10 years",
+      "origin": "East Asia (China, Vietnam)",
+      "diet": "Omnivore: flakes, pellets, bloodworms",
+      "description": "Hardy labyrinth fish that copes with cool water. Males fight each other.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/84187734/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/84187734",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Paradise_fish"
+    },
+    {
+      "id": "cf-marbled-hatchetfish",
+      "name": "Marbled hatchetfish",
+      "aliases": [
+        "hatchetfish",
+        "hatchet fish"
+      ],
+      "scientificName": "Carnegiella strigata",
+      "temperament": "Peaceful",
+      "careLevel": "Moderate",
+      "temperatureC": {
+        "min": 24,
+        "max": 28
+      },
+      "pH": {
+        "min": 5.5,
+        "max": 7.5
+      },
+      "adultLengthCm": 3,
+      "minimumGroupSize": 6,
+      "minimumTankLitres": 60,
+      "swimLevel": "Top",
+      "lifespan": "5 years",
+      "origin": "Amazon basin, South America",
+      "diet": "Carnivore: small insects, flakes, fruit flies",
+      "description": "Surface fish shaped like a hatchet. Jumps well: keep the lid on.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/84798376/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/84798376",
+      "imageLicense": "cc-by-sa",
+      "source": "https://en.wikipedia.org/wiki/Carnegiella_strigata"
+    },
+    {
+      "id": "cf-pea-puffer",
+      "name": "Pea puffer",
+      "aliases": [
+        "dwarf puffer",
+        "malabar puffer"
+      ],
+      "scientificName": "Carinotetraodon travancoricus",
+      "temperament": "Aggressive",
+      "careLevel": "Moderate",
+      "temperatureC": {
+        "min": 24,
+        "max": 28
+      },
+      "pH": {
+        "min": 7,
+        "max": 8
+      },
+      "adultLengthCm": 3,
+      "minimumGroupSize": 1,
+      "minimumTankLitres": 40,
+      "swimLevel": "All levels",
+      "lifespan": "4-5 years",
+      "origin": "India (Kerala)",
+      "diet": "Carnivore: snails, bloodworms, live foods",
+      "description": "Tiny, curious freshwater puffer. Eats snails and nips fins; best kept alone.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/136645066/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/136645066",
+      "imageLicense": "cc-by-nd",
+      "source": "https://en.wikipedia.org/wiki/Malabar_pufferfish"
+    }
+  ]
+}

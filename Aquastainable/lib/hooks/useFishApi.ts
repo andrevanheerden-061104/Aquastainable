@@ -33,6 +33,9 @@ export type FishSpecies = {
   minimumGroupSize?: number | null;
   careProfileConfidence?: string;
   careProfileModel?: string;
+  swimLevel?: string;
+  careLevel?: string;
+  popular?: boolean;
 };
 
 export type TankFish = FishSpecies & {
@@ -99,16 +102,25 @@ export function useFishApi() {
     }
   }, [buildUrl]);
 
+  // Search has its own request (no shared loading flag) and can be cancelled,
+  // so a slow answer for "be" can never overwrite the answer for "betta".
   const searchFish = useCallback(
-    async (query: string) => {
+    async (query: string, signal?: AbortSignal) => {
       const trimmedQuery = query.trim();
       if (!trimmedQuery) {
         return [];
       }
 
-      return await requestApi<FishSpecies[]>('get', `/fish/search?query=${encodeURIComponent(trimmedQuery)}`);
+      try {
+        const response = await axios.get<FishSpecies[]>(buildUrl(`/fish/search?query=${encodeURIComponent(trimmedQuery)}`), { signal });
+        return Array.isArray(response.data) ? response.data : [];
+      } catch (err) {
+        if (axios.isCancel(err)) throw err;
+        const message = axios.isAxiosError(err) ? err.response?.data?.error || err.message : 'Fish search failed.';
+        throw new Error(message);
+      }
     },
-    [requestApi]
+    [buildUrl]
   );
 
   const addFishToTank = useCallback(

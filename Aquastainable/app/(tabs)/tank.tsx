@@ -20,6 +20,7 @@ import { useFishApi } from '@/lib/hooks/useFishApi';
 import { usePlantApi } from '@/lib/hooks/usePlantApi';
 import useWaterTestApi, { WaterTestRecord } from '@/lib/hooks/useWaterTestApi';
 import { auth } from '@/firebase';
+import { present, shortTemperament, temperamentTone } from '@/lib/fishText';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CARD_GAP = 16;
@@ -58,6 +59,9 @@ function mapApiSpecies(item: any, type: Species['type']): Species {
     feeding: item.feeding || item.feedType || 'Unknown',
     schoolSize: item.schoolSize || 'Unknown',
     summary: item.summary || item.description || 'No species description available.',
+    temperament: item.temperament || '',
+    light: item.light || '',
+    placement: item.placement || '',
   };
 }
 
@@ -353,11 +357,21 @@ export default function TankInfoScreen() {
                     key={item.id}
                     image={item.image}
                     title={item.name}
-                    subtitle={item.type === 'plant' ? item.speciesName : item.schoolSize && item.schoolSize !== 'Unknown' ? `School of ${item.schoolSize}` : item.speciesName}
-                    badge={item.type === 'plant' ? 'Plant' : 'Fish'}
+                    subtitle={item.speciesName}
+                    badge={item.type === 'plant' ? 'Plant' : shortTemperament(item.temperament) || 'Fish'}
+                    badgeTone={item.type === 'plant' ? 'good' : temperamentTone(item.temperament)}
                     onPress={() => openSpecies(item)}
                     style={{ width: SPECIES_CARD }}
-                    height={230}
+                    height={200}
+                    meta={item.type === 'plant' ? [
+                      ...(present(item.light) ? [{ icon: 'sun.max', label: `${shortTemperament(item.light)} light`, color: Palette.warning }] : []),
+                      ...(present(item.placement) ? [{ icon: 'square.grid.2x2', label: shortTemperament(item.placement), color: Palette.success }] : []),
+                      { icon: 'mappin', label: tank.tankName },
+                    ] : [
+                      { icon: 'person.3', label: present(item.schoolSize) && item.schoolSize !== 'Unknown' ? `${item.schoolSize} in this tank` : 'School size not set', color: Palette.accent },
+                      ...(present(item.preferredTempC) && item.preferredTempC !== 'Unknown' ? [{ icon: 'thermometer', label: `${item.preferredTempC}°C`.replace('°C°C', '°C'), color: Palette.success }] : []),
+                      ...(present(item.origin) && item.origin !== 'Unknown' ? [{ icon: 'globe', label: item.origin }] : [{ icon: 'mappin', label: tank.tankName }]),
+                    ]}
                   />
                 ))}
               </ScrollView>

@@ -72,7 +72,7 @@ export default function SpeciesHero({ image, title, subtitle, chips = [], right,
               return (
                 <View key={chip.label} style={[styles.chip, { backgroundColor: c.bg }]}>
                   <View style={[styles.dot, { backgroundColor: c.dot }]} />
-                  <Text style={[styles.chipText, { color: c.fg }]}>{chip.label}</Text>
+                  <Text style={[styles.chipText, { color: c.fg }]} numberOfLines={1}>{chip.label}</Text>
                 </View>
               );
             })}
@@ -92,11 +92,11 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', justifyContent: 'center', backgroundColor: Palette.surface },
   topBar: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   round: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(12,14,18,0.55)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' },
-  titleBlock: { paddingHorizontal: 20, paddingBottom: 6 },
+  titleBlock: { paddingHorizontal: 20, paddingBottom: 6, maxWidth: '100%' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, maxWidth: '100%', flexShrink: 1 },
   dot: { width: 6, height: 6, borderRadius: 3 },
-  chipText: { fontSize: 12, fontFamily: 'Montserrat_600SemiBold' },
+  chipText: { flexShrink: 1, fontSize: 12, fontFamily: 'Montserrat_600SemiBold' },
   light: { color: 'rgba(244,246,248,0.85)', fontSize: 28, lineHeight: 34, fontFamily: 'Montserrat_400Regular' },
   bold: { color: Palette.text, fontSize: 34, lineHeight: 40, fontFamily: 'Montserrat_700Bold' },
   subtitle: { color: Palette.textMuted, fontSize: 14, fontStyle: 'italic', marginTop: 4 },

@@ -3,7 +3,10 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-nat
 import { useLocalSearchParams } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 
+import FactList from '@/components/kit/FactList';
+import ProseCard from '@/components/kit/ProseCard';
 import Section from '@/components/kit/Section';
+import { shortTemperament } from '@/lib/fishText';
 import SpecGrid, { SpecItem } from '@/components/kit/SpecGrid';
 import SpeciesHero from '@/components/kit/SpeciesHero';
 import { Palette } from '@/constants/palette';
@@ -49,7 +52,7 @@ export default function PlantDetailsScreen() {
           image={mainPlant?.image ? { uri: mainPlant.image } : null}
           title={mainPlant?.name ?? (loading ? 'Loading…' : 'Plant')}
           subtitle={mainPlant?.scientificName}
-          chips={mainPlant?.growthRate ? [{ label: `${mainPlant.growthRate} growth`, tone: 'good' }] : []}
+          chips={mainPlant?.growthRate ? [{ label: `${shortTemperament(mainPlant.growthRate)} growth`, tone: 'good' }] : []}
         />
         <View style={styles.paddedContent}>
           {loading ? <ActivityIndicator color={Palette.primaryBright} style={{ marginTop: 24 }} /> : null}
@@ -59,7 +62,17 @@ export default function PlantDetailsScreen() {
                 <SpecGrid items={specs} />
               </Section>
               <Section title="Overview" icon="info.circle">
-                <Text style={styles.paragraph}>{mainPlant.description || 'No description yet for this plant.'}</Text>
+                <ProseCard eyebrow={`About ${mainPlant.name}`} icon="leaf" color={Palette.success} text={mainPlant.description || 'No description yet for this plant.'} />
+              </Section>
+              <Section title="Quick facts" icon="list.bullet">
+                <FactList items={[
+                  { icon: 'leaf', label: 'How to plant', value: mainPlant.attachment, color: Palette.success },
+                  { icon: 'water.waves', label: 'CO2', value: mainPlant.co2, color: Palette.primaryBright },
+                  { icon: 'heart', label: 'Care level', value: mainPlant.careLevel, color: Palette.success },
+                  { icon: 'arrow.up.and.down', label: 'Max height', value: mainPlant.maxHeightCm ? `${mainPlant.maxHeightCm} cm` : null, color: Palette.primaryBright },
+                  { icon: 'globe', label: 'Origin', value: mainPlant.origin },
+                  { icon: 'mappin', label: 'Lives in', value: mainPlant.tankName, color: Palette.primaryBright },
+                ]} />
               </Section>
             </>
           ) : !loading ? <Text style={[styles.paragraph, { marginTop: 24 }]}>We could not find this plant.</Text> : null}

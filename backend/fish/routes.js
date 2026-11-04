@@ -1,6 +1,7 @@
 const express = require('express');
 const cloudinary = require('cloudinary').v2;
 const { searchFish } = require('./service');
+const catalog = require('./catalog');
 const aiService = require('../ai/service');
 
 const INDIVIDUAL_FISH_FIELDS = ['name', 'age', 'health', 'story'];
@@ -102,6 +103,10 @@ function rangeText(range, suffix = '') {
 }
 
 async function getCareProfile(body) {
+  // Common fish: use the curated catalogue data instead of asking the AI.
+  const catalogueProfile = catalog.careProfileFor(body.fishId, body.scientificName);
+  if (catalogueProfile) return catalogueProfile;
+
   const profile = await aiService.generateFishData(body.scientificName || body.name || body.fishId);
   return {
     description: String(profile.careNotes || '').trim(),
@@ -225,8 +230,20 @@ async function assessAddition(db, body) {
   };
 }
 
+// Fill in a photo for catalogue fish that were picked before their photo loaded.
+async function withCatalogueImage(record) {
+  if (record.image) return record;
+  const fish = catalog.findCatalogueFish(record.fishId, record.scientificName);
+  if (!fish) return record;
+  const species = await catalog.toFishSpecies(fish).catch(() => null);
+  return species?.image
+    ? { ...record, image: species.image, imageSourceUrl: species.imageSourceUrl, imageLicense: species.imageLicense }
+    : record;
+}
+
 function createFishRouter({ db }) {
   const router = express.Router();
+  catalog.warmImages();
 
   router.post('/assess-add', async (req, res) => {
     try {
@@ -282,7 +299,7 @@ function createFishRouter({ db }) {
         return res.status(403).json({ error: 'Tank does not belong to this user.' });
       }
 
-      const fishRecord = {
+      const fishRecord = await withCatalogueImage({
         fishId,
         tankId,
         name: req.body.name || '',
@@ -295,7 +312,7 @@ function createFishRouter({ db }) {
         schoolSize,
         addedAt: new Date(),
         ...(await getCareProfileSafely(req.body)),
-      };
+      });
       const docRef = await tankRef.collection('fish').add(fishRecord);
       return res.status(201).json({ id: docRef.id, ...fishRecord, assessment });
     } catch (error) {
@@ -356,7 +373,7 @@ function createFishRouter({ db }) {
         return res.status(403).json({ error: 'Tank does not belong to this user.' });
       }
 
-      const fishRecord = {
+      const fishRecord = await withCatalogueImage({
         fishId,
         tankId,
         name: name || '',
@@ -369,7 +386,7 @@ function createFishRouter({ db }) {
         schoolSize,
         addedAt: new Date(),
         ...(await getCareProfileSafely(req.body)),
-      };
+      });
 
       const docRef = await db.collection('tanks').doc(tankId).collection('fish').add(fishRecord);
       return res.status(201).json({ id: docRef.id, ...fishRecord });

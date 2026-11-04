@@ -1,3 +1,5 @@
+import { searchPlantCatalogue } from '@/lib/plantCatalog';
+import { searchFishCatalogue } from '@/lib/fishCatalog';
 // Demo backend: answers the app's API calls from local sample data.
 // Only installed when EXPO_PUBLIC_DEMO=1 (see app/_layout.tsx), so the real app is unaffected.
 import axios, { AxiosAdapter, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
@@ -154,7 +156,12 @@ const route = (config: InternalAxiosRequestConfig): unknown => {
     return test;
   }
 
-  if (path === '/fish/search') return fishCatalogue;
+  if (path === '/fish/search') {
+    // Same quick-search catalogue as the real app; demo photos fill the two sample fish.
+    const photos = new Map(fishCatalogue.map((fish: any) => [String(fish.scientificName).toLowerCase(), fish.image]));
+    return searchFishCatalogue(url.searchParams.get('query') || '', 12)
+      .map((fish) => ({ ...fish, image: fish.image || photos.get(fish.scientificName.toLowerCase()) || '' }));
+  }
   if ((match = path.match(/^\/fish\/tank\/([^/]+)$/))) return tankFish.filter((f) => f.tankId === match![1]);
   if (path.match(/^\/fish\/user\//)) return tankFish;
   if (path === '/fish/assess-add') return { canAdd: true, status: 'compatible', title: 'Good match', explanation: 'This fish suits your tank size and water.', optimalSchoolSize: '6', maximumSchoolSize: '10', selectedTankId: data.tankId, selectedTankName: 'Guppy Kingdom', suggestedTankId: null, suggestedTankName: '' };
@@ -162,7 +169,11 @@ const route = (config: InternalAxiosRequestConfig): unknown => {
   if (path.includes('/individual-fish')) return { ...individualFish[0], ...data, parentSchoolSize: '6' };
   if (path.startsWith('/fish/')) return { success: true, updated: 1, ...tankFish[0] };
 
-  if (path === '/plants/search') return plants;
+  if (path === '/plants/search') {
+    const photos = new Map(plants.map((plant: any) => [String(plant.scientificName).toLowerCase(), plant.image]));
+    return searchPlantCatalogue(url.searchParams.get('query') || '', 12)
+      .map((plant) => ({ ...plant, image: plant.image || photos.get(plant.scientificName.toLowerCase()) || '' }));
+  }
   if (path.match(/^\/plants\/user\//)) return plants;
   if (path === '/plants/assess-add') return { canAdd: true, status: 'compatible', title: 'Good match', explanation: 'This plant likes your water.', suggestedPlantName: '' };
   if (path.startsWith('/plants/')) return { success: true, ...plants[0] };

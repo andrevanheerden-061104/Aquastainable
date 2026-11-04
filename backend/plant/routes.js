@@ -1,5 +1,6 @@
 const express = require('express');
 const { searchPlants } = require('./service');
+const catalog = require('./catalog');
 const aiService = require('../ai/service');
 
 function rangeText(range, suffix = '') {
@@ -7,7 +8,10 @@ function rangeText(range, suffix = '') {
   return `${range.min}-${range.max}${suffix}`;
 }
 
-async function getPlantCareProfile(name, scientificName) {
+async function getPlantCareProfile(name, scientificName, plantId) {
+  // Common plants: use the curated catalogue data instead of asking the AI.
+  const catalogueProfile = catalog.careProfileFor(plantId, scientificName);
+  if (catalogueProfile) return catalogueProfile;
   try {
     const profile = await aiService.generatePlantData(scientificName || name);
     return {
@@ -64,8 +68,21 @@ async function getTankContext(db, userId, tankId) {
   };
 }
 
+// Catalogue plants picked before their photo loaded get the photo filled in here.
+async function plantImage({ plantId, scientificName, image, imageSourceUrl, imageLicense }) {
+  if (image) return { image, imageSourceUrl: imageSourceUrl || '', imageLicense: imageLicense || '' };
+  const plant = catalog.findCataloguePlant(plantId, scientificName);
+  const species = plant ? await catalog.toPlantSpecies(plant).catch(() => null) : null;
+  return {
+    image: species?.image || '',
+    imageSourceUrl: species?.imageSourceUrl || imageSourceUrl || '',
+    imageLicense: species?.imageLicense || imageLicense || '',
+  };
+}
+
 function createPlantRouter({ db }) {
   const router = express.Router();
+  catalog.warmImages();
 
   router.get('/search', async (req, res) => {
     try {
@@ -127,12 +144,10 @@ function createPlantRouter({ db }) {
         tankId: String(tankId),
         name: String(name).trim(),
         scientificName: String(scientificName).trim(),
-        image: image || '',
-        imageSourceUrl: imageSourceUrl || '',
-        imageLicense: imageLicense || '',
+        ...(await plantImage({ plantId, scientificName, image, imageSourceUrl, imageLicense })),
         source: source || '',
         addedAt: new Date(),
-        ...(await getPlantCareProfile(name, scientificName)),
+        ...(await getPlantCareProfile(name, scientificName, plantId)),
       };
       const plantRef = await tankRef.collection('plants').add(plantRecord);
       return res.status(201).json({ id: plantRef.id, tankName: tankDoc.data().tankName || 'Unnamed tank', ...plantRecord });

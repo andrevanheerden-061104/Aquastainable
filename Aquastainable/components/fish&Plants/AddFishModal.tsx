@@ -3,9 +3,11 @@ import { ActivityIndicator, Alert, Image, Modal, ScrollView, StyleSheet, Text, T
 import { onAuthStateChanged } from 'firebase/auth';
 import SwipeCheckButton from './SwipeCheckButton';
 import CompatibilityResultModal from './CompatibilityResultModal';
+import { searchFishCatalogue } from '@/lib/fishCatalog';
 import { useFishApi, FishSpecies } from '@/lib/hooks/useFishApi';
 import { FishCompatibilityAssessment } from '@/lib/hooks/useFishApi';
 import { auth } from '@/firebase';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useTankApi, TankRecord } from '@/lib/hooks/useTankApi';
 
 type Props = {
@@ -59,38 +61,60 @@ export default function AddFishModal({ visible, onClose, tankId: defaultTankId }
       .catch(() => setTanks([]));
   }, [currentUserId, defaultTankId, getUserTanks]);
 
-  // Search fish whenever the user types, so suggestions update with each letter.
+  // Search as the user types:
+  // 1. The 50 most common fish are matched instantly on the phone (no network, every letter).
+  // 2. 300 ms after typing stops, the server searches online too (common + scientific names).
+  //    Older requests are cancelled, so results never jump back to an earlier word.
   useEffect(() => {
     const trimmedQuery = speciesQuery.trim();
+    setSearchError('');
 
-    if (!trimmedQuery) {
+    if (!trimmedQuery || (selectedFish && trimmedQuery === (selectedFish.FBname || selectedFish.name).trim())) {
       setFishSuggestions([]);
       setShowSuggestions(false);
-      setSearchError('');
       setSearchLoading(false);
       return;
     }
 
-    const searchAsync = async () => {
-      setSearchLoading(true);
-      try {
-        const results = await searchFish(trimmedQuery);
-        const nextResults = Array.isArray(results) ? results : [];
-        setFishSuggestions(nextResults);
-        setShowSuggestions(nextResults.length > 0);
-        setSearchError('');
-      } catch (error) {
-        console.error('Search error:', error);
-        setFishSuggestions([]);
-        setShowSuggestions(false);
-        setSearchError(error instanceof Error ? error.message : 'Fish species search is unavailable.');
-      } finally {
-        setSearchLoading(false);
-      }
-    };
+    const local = searchFishCatalogue(trimmedQuery);
+    setFishSuggestions(local);
+    setShowSuggestions(local.length > 0);
 
-    searchAsync();
-  }, [speciesQuery, searchFish]);
+    if (trimmedQuery.length < 2) {
+      setSearchLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setSearchLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const remote = await searchFish(trimmedQuery, controller.signal);
+        if (controller.signal.aborted) return;
+        // Keep the local order; take photos from the server; add online-only fish after.
+        const remoteById = new Map(remote.map((fish) => [fish.id, fish]));
+        const merged = local.map((fish) => ({ ...fish, ...(remoteById.get(fish.id)?.image ? { image: remoteById.get(fish.id)!.image, imageSourceUrl: remoteById.get(fish.id)!.imageSourceUrl, imageLicense: remoteById.get(fish.id)!.imageLicense } : {}) }));
+        const known = new Set(merged.map((fish) => fish.scientificName.toLowerCase()));
+        remote.forEach((fish) => {
+          const key = (fish.scientificName || '').toLowerCase();
+          if (!known.has(key)) { known.add(key); merged.push(fish); }
+        });
+        setFishSuggestions(merged.slice(0, 12));
+        setShowSuggestions(merged.length > 0);
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        // Online search failed: keep the instant results and only show an error if there are none.
+        if (!local.length) setSearchError(error instanceof Error ? error.message : 'Fish species search is unavailable.');
+      } finally {
+        if (!controller.signal.aborted) setSearchLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [speciesQuery, searchFish, selectedFish]);
 
   const handleSelectFish = (fish: FishSpecies) => {
     setSelectedFish(fish);
@@ -253,13 +277,12 @@ export default function AddFishModal({ visible, onClose, tankId: defaultTankId }
                 placeholderTextColor="#6E7684"
                 style={styles.input}
               />
-              <Text style={styles.helperText}>Start typing to search freshwater aquarium fish species.</Text>
-              {searchLoading ? (
-                <View style={styles.searchLoadingRow}>
-                  <ActivityIndicator size="small" color="#4FB3CC" />
-                  <Text style={styles.searchLoadingText}>Searching fish species...</Text>
-                </View>
-              ) : null}
+              <View style={styles.helperRow}>
+                <Text style={styles.helperText}>
+                  {searchLoading ? 'Searching more species online…' : 'Search by common or scientific name.'}
+                </Text>
+                {searchLoading ? <ActivityIndicator size="small" color="#4FB3CC" /> : null}
+              </View>
 
               {/* Fish Suggestions */}
               {showSuggestions && fishSuggestions.length > 0 && (
@@ -272,18 +295,29 @@ export default function AddFishModal({ visible, onClose, tankId: defaultTankId }
                     >
                       {fish.image ? (
                         <Image source={{ uri: fish.image }} style={styles.suggestionImage} />
-                      ) : null}
+                      ) : (
+                        <View style={[styles.suggestionImage, styles.suggestionImageEmpty]}>
+                          <IconSymbol name="fish" size={20} color="#4FB3CC" />
+                        </View>
+                      )}
                       <View style={styles.suggestionContent}>
-                        <Text style={styles.suggestionName}>{fish.FBname || fish.name}</Text>
-                        {fish.scientificName ? <Text style={styles.suggestionScientific}>{fish.scientificName}</Text> : null}
-                        {fish.schoolSize ? <Text style={styles.suggestionSchool}>School: {fish.schoolSize}</Text> : null}
+                        <View style={styles.suggestionTitleRow}>
+                          <Text style={styles.suggestionName} numberOfLines={1}>{fish.FBname || fish.name}</Text>
+                          {fish.popular ? <Text style={styles.popularBadge}>Popular</Text> : null}
+                        </View>
+                        {fish.scientificName ? <Text style={styles.suggestionScientific} numberOfLines={1}>{fish.scientificName}</Text> : null}
+                        {fish.popular ? (
+                          <Text style={styles.suggestionSchool}>
+                            {[fish.careLevel && `${fish.careLevel} care`, fish.schoolSize && (fish.schoolSize === "1" ? "keep alone" : `group of ${fish.schoolSize}+`), fish.bestTempC].filter(Boolean).join(' · ')}
+                          </Text>
+                        ) : fish.schoolSize ? <Text style={styles.suggestionSchool}>School: {fish.schoolSize}</Text> : null}
                       </View>
                     </TouchableOpacity>
                   ))}
                 </View>
               )}
 
-              {speciesQuery.trim().length > 0 && !searchLoading && !apiLoading && fishSuggestions.length === 0 && (
+              {speciesQuery.trim().length > 0 && !selectedFish && !searchLoading && fishSuggestions.length === 0 && (
                 <Text style={styles.noResultsText}>{searchError || 'No fish found for that search.'}</Text>
               )}
             </View>
@@ -349,6 +383,10 @@ export default function AddFishModal({ visible, onClose, tankId: defaultTankId }
 }
 
 const styles = StyleSheet.create({
+  helperRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8, minHeight: 20 },
+  suggestionImageEmpty: { backgroundColor: 'rgba(46,140,166,0.18)', alignItems: 'center', justifyContent: 'center' },
+  suggestionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  popularBadge: { color: '#E0782A', backgroundColor: 'rgba(224,120,42,0.16)', fontSize: 10, fontWeight: '800', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, overflow: 'hidden' },
   screenBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(7, 12, 21, 0.65)',
@@ -439,7 +477,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.08)',
   },
   helperText: {
-    marginTop: 8,
+    flex: 1,
     color: '#7B869E',
     fontSize: 12,
     lineHeight: 16,

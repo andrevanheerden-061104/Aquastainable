@@ -12,6 +12,7 @@ import PhotoCard from '@/components/kit/PhotoCard';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Palette } from '@/constants/palette';
 import { TankFish, useFishApi } from '@/lib/hooks/useFishApi';
+import { shortTemperament, temperamentTone } from '@/lib/fishText';
 
 type SpeciesCardItem = TankFish;
 
@@ -52,7 +53,7 @@ export default function FishSpeciesScreen() {
   const formatSchoolSize = (value = '') => {
     const compactValue = value.replace(/[^0-9]/g, '');
     if (!compactValue) {
-      return 'N/A';
+      return '?';
     }
     return compactValue.length > 10 ? `${compactValue.slice(0, 10)}...` : compactValue;
   };
@@ -97,7 +98,7 @@ export default function FishSpeciesScreen() {
           <Text style={styles.title}>Fish</Text>
           {species.length ? <View style={styles.count}><Text style={styles.countText}>{species.length}</Text></View> : null}
         </View>
-        <Text style={styles.subtitle}>Tap a fish to see its care. Press and hold to edit or delete.</Text>
+        <Text style={styles.subtitle}>Hold a fish to see its care. Use the buttons underneath to edit or remove it.</Text>
       </View>
 
       <FlatList
@@ -115,8 +116,14 @@ export default function FishSpeciesScreen() {
             <PhotoCard
               image={item.image}
               title={item.name}
-              subtitle={`${item.tankName || 'Unnamed tank'} · ${formatSchoolSize(item.schoolSize)}`}
-              badge={item.temperament || undefined}
+              subtitle={item.scientificName || undefined}
+              badge={shortTemperament(item.temperament) || undefined}
+              badgeTone={temperamentTone(item.temperament)}
+              meta={[
+                { icon: 'mappin', label: item.tankName || 'Unnamed tank' },
+                { icon: 'person.3', label: `${formatSchoolSize(item.schoolSize)} in school`, color: Palette.accent },
+                ...(item.bestTempC || item.tempC ? [{ icon: 'thermometer', label: `${item.bestTempC || item.tempC}°C`.replace('°C°C', '°C'), color: Palette.success }] : []),
+              ]}
               onPress={() => handlePress(item)}
               height={200}
               style={styles.card}

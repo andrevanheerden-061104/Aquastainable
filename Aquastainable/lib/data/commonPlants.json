@@ -1,0 +1,994 @@
+{
+  "_about": "Common aquarium plants. Searched instantly by name, nickname and scientific name before any online lookup. Care values are typical hobby ranges. Fill photos with: node scripts/fill-catalogue-images.js (from the backend folder)",
+  "version": 1,
+  "plants": [
+    {
+      "id": "curated-duckweed",
+      "name": "Duckweed",
+      "aliases": [
+        "lemna",
+        "common duckweed",
+        "duck weed"
+      ],
+      "scientificName": "Lemna minor",
+      "light": "Low to high",
+      "growthRate": "Very fast",
+      "placement": "Floating",
+      "attachment": "Floats on the surface",
+      "temperatureC": {
+        "min": 6,
+        "max": 33
+      },
+      "pH": {
+        "min": 5,
+        "max": 9
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 1,
+      "co2": "Not needed",
+      "origin": "Worldwide",
+      "description": "Tiny floating leaves that cover the surface fast, soak up nitrates and shade the tank. Scoop out extra every week so light still reaches the bottom.",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/5/5f/Lemna_minor_1.jpg",
+      "imageSourceUrl": "https://commons.wikimedia.org/wiki/File:Lemna_minor_1.jpg",
+      "imageLicense": "CC BY-SA",
+      "source": "https://en.wikipedia.org/wiki/Lemna_minor"
+    },
+    {
+      "id": "cp-java-fern",
+      "name": "Java fern",
+      "aliases": [
+        "java fern narrow leaf",
+        "windelov",
+        "microsorum"
+      ],
+      "scientificName": "Microsorum pteropus",
+      "light": "Low",
+      "growthRate": "Slow",
+      "placement": "Midground",
+      "attachment": "Tie to wood or rock (don't bury the rhizome)",
+      "temperatureC": {
+        "min": 20,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 35,
+      "co2": "Not needed",
+      "origin": "Southeast Asia",
+      "description": "Tough fern that grows on wood or rock. Fish rarely eat it, so it suits goldfish and cichlid tanks.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/112527368/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/112527368",
+      "imageLicense": "cc-by",
+      "source": "https://en.wikipedia.org/wiki/Microsorum_pteropus"
+    },
+    {
+      "id": "cp-anubias-nana",
+      "name": "Anubias nana",
+      "aliases": [
+        "anubias",
+        "anubias barteri",
+        "nana petite"
+      ],
+      "scientificName": "Anubias barteri",
+      "light": "Low",
+      "growthRate": "Slow",
+      "placement": "Foreground",
+      "attachment": "Tie to wood or rock (don't bury the rhizome)",
+      "temperatureC": {
+        "min": 22,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 10,
+      "co2": "Not needed",
+      "origin": "West Africa",
+      "description": "Almost impossible to kill. Thick dark leaves that most fish leave alone; keep it out of strong light to avoid algae on the leaves.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/28728905/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/28728905",
+      "imageLicense": "pd",
+      "source": "https://en.wikipedia.org/wiki/Anubias_barteri"
+    },
+    {
+      "id": "cp-java-moss",
+      "name": "Java moss",
+      "aliases": [
+        "moss"
+      ],
+      "scientificName": "Taxiphyllum barbieri",
+      "light": "Low to medium",
+      "growthRate": "Medium",
+      "placement": "Anywhere",
+      "attachment": "Tie to wood or rock, or let it drift",
+      "temperatureC": {
+        "min": 21,
+        "max": 29
+      },
+      "pH": {
+        "min": 5,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 10,
+      "co2": "Not needed",
+      "origin": "Southeast Asia",
+      "description": "Soft moss for wood, rocks and walls. Great hiding place for baby fish and shrimp.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/123781329/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/123781329",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Taxiphyllum_barbieri"
+    },
+    {
+      "id": "cp-christmas-moss",
+      "name": "Christmas moss",
+      "aliases": [
+        "xmas moss"
+      ],
+      "scientificName": "Vesicularia montagnei",
+      "light": "Low to medium",
+      "growthRate": "Slow",
+      "placement": "Anywhere",
+      "attachment": "Tie to wood or rock",
+      "temperatureC": {
+        "min": 20,
+        "max": 28
+      },
+      "pH": {
+        "min": 5.5,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 5,
+      "co2": "Helps",
+      "origin": "Southeast Asia",
+      "description": "Moss with neat branches shaped like little Christmas trees. Grows tidier than Java moss.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/78707093/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/78707093",
+      "imageLicense": "cc-by-sa",
+      "source": "https://en.wikipedia.org/wiki/Vesicularia_montagnei"
+    },
+    {
+      "id": "cp-marimo-moss-ball",
+      "name": "Marimo moss ball",
+      "aliases": [
+        "marimo",
+        "moss ball",
+        "moss balls"
+      ],
+      "scientificName": "Aegagropila linnaei",
+      "light": "Low",
+      "growthRate": "Very slow",
+      "placement": "Foreground",
+      "attachment": "Sits on the substrate",
+      "temperatureC": {
+        "min": 4,
+        "max": 25
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 8.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 10,
+      "co2": "Not needed",
+      "origin": "Japan, Northern Europe",
+      "description": "A round ball of algae, not a real moss. Roll it gently now and then so it keeps its shape. Prefers cooler water.",
+      "image": "https://static.inaturalist.org/photos/44554452/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/44554452",
+      "imageLicense": "",
+      "source": "https://en.wikipedia.org/wiki/Aegagropila_linnaei"
+    },
+    {
+      "id": "cp-amazon-sword",
+      "name": "Amazon sword",
+      "aliases": [
+        "sword plant",
+        "echinodorus",
+        "amazon sword plant"
+      ],
+      "scientificName": "Echinodorus grisebachii",
+      "light": "Medium",
+      "growthRate": "Medium",
+      "placement": "Background",
+      "attachment": "Plant in substrate",
+      "temperatureC": {
+        "min": 22,
+        "max": 28
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 50,
+      "co2": "Not needed",
+      "origin": "South America",
+      "description": "Big rosette plant for the back of the tank. A heavy root feeder: push root tabs into the gravel near it.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/110411027/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/110411027",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Echinodorus_grisebachii"
+    },
+    {
+      "id": "cp-cryptocoryne-wendtii",
+      "name": "Cryptocoryne wendtii",
+      "aliases": [
+        "crypt",
+        "crypts",
+        "wendtii",
+        "cryptocoryne"
+      ],
+      "scientificName": "Cryptocoryne wendtii",
+      "light": "Low to medium",
+      "growthRate": "Slow",
+      "placement": "Midground",
+      "attachment": "Plant in substrate",
+      "temperatureC": {
+        "min": 22,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 8
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 20,
+      "co2": "Not needed",
+      "origin": "Sri Lanka",
+      "description": "Easy midground plant in green, brown or red. It often 'melts' after moving; leave the roots and it grows back.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/461292042/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/461292042",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Cryptocoryne_wendtii"
+    },
+    {
+      "id": "cp-hornwort",
+      "name": "Hornwort",
+      "aliases": [
+        "coontail"
+      ],
+      "scientificName": "Ceratophyllum demersum",
+      "light": "Low to high",
+      "growthRate": "Fast",
+      "placement": "Background or floating",
+      "attachment": "Float it or anchor the stems",
+      "temperatureC": {
+        "min": 15,
+        "max": 30
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 300,
+      "co2": "Not needed",
+      "origin": "Worldwide",
+      "description": "Fast stem plant with no roots. Soaks up nitrates and helps stop algae. Can drop needles when first added.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/193786804/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/193786804",
+      "imageLicense": "cc-by",
+      "source": "https://en.wikipedia.org/wiki/Ceratophyllum_demersum"
+    },
+    {
+      "id": "cp-water-wisteria",
+      "name": "Water wisteria",
+      "aliases": [
+        "wisteria",
+        "hygrophila difformis"
+      ],
+      "scientificName": "Hygrophila difformis",
+      "light": "Medium",
+      "growthRate": "Fast",
+      "placement": "Background",
+      "attachment": "Plant in substrate",
+      "temperatureC": {
+        "min": 22,
+        "max": 28
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 50,
+      "co2": "Not needed",
+      "origin": "South Asia",
+      "description": "Fast, lacy stem plant that fills the background quickly and uses up nitrates.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/191137959/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/191137959",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Hygrophila_difformis"
+    },
+    {
+      "id": "cp-dwarf-sagittaria",
+      "name": "Dwarf sagittaria",
+      "aliases": [
+        "sagittaria",
+        "dwarf sag"
+      ],
+      "scientificName": "Sagittaria subulata",
+      "light": "Low to medium",
+      "growthRate": "Medium",
+      "placement": "Foreground",
+      "attachment": "Plant in substrate",
+      "temperatureC": {
+        "min": 22,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 10,
+      "co2": "Not needed",
+      "origin": "Americas",
+      "description": "Grass-like plant that spreads by runners into a low carpet without needing CO2.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/59808160/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/59808160",
+      "imageLicense": "cc-by-nc-sa",
+      "source": "https://en.wikipedia.org/wiki/Sagittaria_subulata"
+    },
+    {
+      "id": "cp-vallisneria",
+      "name": "Vallisneria",
+      "aliases": [
+        "val",
+        "vals",
+        "jungle val",
+        "eelgrass"
+      ],
+      "scientificName": "Vallisneria spiralis",
+      "light": "Low to medium",
+      "growthRate": "Fast",
+      "placement": "Background",
+      "attachment": "Plant in substrate",
+      "temperatureC": {
+        "min": 20,
+        "max": 28
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 8
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 60,
+      "co2": "Not needed",
+      "origin": "Southern Europe, North Africa",
+      "description": "Long ribbon leaves that sway in the current. Spreads by runners and likes harder water.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/60027138/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/60027138",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Vallisneria_spiralis"
+    },
+    {
+      "id": "cp-amazon-frogbit",
+      "name": "Amazon frogbit",
+      "aliases": [
+        "frogbit"
+      ],
+      "scientificName": "Limnobium laevigatum",
+      "light": "Medium",
+      "growthRate": "Fast",
+      "placement": "Floating",
+      "attachment": "Floats on the surface",
+      "temperatureC": {
+        "min": 18,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 5,
+      "co2": "Not needed",
+      "origin": "Central and South America",
+      "description": "Floating plant with round leaves and long roots that baby fish hide in. Keep the leaves dry on top.",
+      "image": "https://static.inaturalist.org/photos/158904950/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/158904950",
+      "imageLicense": "",
+      "source": "https://en.wikipedia.org/wiki/Limnobium_laevigatum"
+    },
+    {
+      "id": "cp-red-root-floater",
+      "name": "Red root floater",
+      "aliases": [
+        "phyllanthus"
+      ],
+      "scientificName": "Phyllanthus fluitans",
+      "light": "Medium to high",
+      "growthRate": "Fast",
+      "placement": "Floating",
+      "attachment": "Floats on the surface",
+      "temperatureC": {
+        "min": 20,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 2,
+      "co2": "Not needed",
+      "origin": "South America",
+      "description": "Small floating plant whose leaves and roots turn red in strong light.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/29142129/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/29142129",
+      "imageLicense": "cc-by-nc-sa",
+      "source": "https://en.wikipedia.org/wiki/Phyllanthus_fluitans"
+    },
+    {
+      "id": "cp-salvinia",
+      "name": "Salvinia",
+      "aliases": [
+        "water spangles",
+        "salvinia minima"
+      ],
+      "scientificName": "Salvinia minima",
+      "light": "Medium",
+      "growthRate": "Fast",
+      "placement": "Floating",
+      "attachment": "Floats on the surface",
+      "temperatureC": {
+        "min": 20,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 2,
+      "co2": "Not needed",
+      "origin": "Central and South America",
+      "description": "Small fuzzy floating fern. Check your local rules first: some Salvinia species are invasive.",
+      "image": "https://static.inaturalist.org/photos/78551877/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/78551877",
+      "imageLicense": "",
+      "source": "https://en.wikipedia.org/wiki/Salvinia_minima"
+    },
+    {
+      "id": "cp-water-lettuce",
+      "name": "Water lettuce",
+      "aliases": [
+        "pistia"
+      ],
+      "scientificName": "Pistia stratiotes",
+      "light": "Medium to high",
+      "growthRate": "Fast",
+      "placement": "Floating",
+      "attachment": "Floats on the surface",
+      "temperatureC": {
+        "min": 22,
+        "max": 30
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 10,
+      "co2": "Not needed",
+      "origin": "Tropics worldwide",
+      "description": "Floating rosette with velvet leaves. Declared invasive in South Africa and many other places: keep it indoors and never dump it.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/309359974/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/309359974",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Pistia_stratiotes"
+    },
+    {
+      "id": "cp-guppy-grass",
+      "name": "Guppy grass",
+      "aliases": [
+        "najas"
+      ],
+      "scientificName": "Najas guadalupensis",
+      "light": "Low to high",
+      "growthRate": "Very fast",
+      "placement": "Floating or background",
+      "attachment": "Float it or plant the stems",
+      "temperatureC": {
+        "min": 15,
+        "max": 30
+      },
+      "pH": {
+        "min": 6,
+        "max": 8
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 60,
+      "co2": "Not needed",
+      "origin": "Americas",
+      "description": "Very fast and very hardy. A favourite for guppy and shrimp tanks because babies hide in it.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/17119983/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/17119983",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Najas_guadalupensis"
+    },
+    {
+      "id": "cp-anacharis",
+      "name": "Anacharis",
+      "aliases": [
+        "elodea",
+        "brazilian waterweed",
+        "egeria"
+      ],
+      "scientificName": "Egeria densa",
+      "light": "Medium",
+      "growthRate": "Fast",
+      "placement": "Background",
+      "attachment": "Plant the stems or let them float",
+      "temperatureC": {
+        "min": 10,
+        "max": 26
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 100,
+      "co2": "Not needed",
+      "origin": "South America",
+      "description": "Classic cold-water stem plant for goldfish tanks. Declared invasive in South Africa: never release it outside.",
+      "image": "https://static.inaturalist.org/photos/466025416/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/466025416",
+      "imageLicense": "",
+      "source": "https://en.wikipedia.org/wiki/Egeria_densa"
+    },
+    {
+      "id": "cp-water-sprite",
+      "name": "Water sprite",
+      "aliases": [
+        "indian fern"
+      ],
+      "scientificName": "Ceratopteris thalictroides",
+      "light": "Medium",
+      "growthRate": "Fast",
+      "placement": "Background or floating",
+      "attachment": "Plant in substrate or float it",
+      "temperatureC": {
+        "min": 20,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 50,
+      "co2": "Not needed",
+      "origin": "Tropics worldwide",
+      "description": "Soft, fast-growing fern that can be planted or left floating.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/251718703/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/251718703",
+      "imageLicense": "cc-by",
+      "source": "https://en.wikipedia.org/wiki/Ceratopteris_thalictroides"
+    },
+    {
+      "id": "cp-brazilian-pennywort",
+      "name": "Brazilian pennywort",
+      "aliases": [
+        "pennywort"
+      ],
+      "scientificName": "Hydrocotyle leucocephala",
+      "light": "Medium",
+      "growthRate": "Fast",
+      "placement": "Background or floating",
+      "attachment": "Plant the stems or let them float",
+      "temperatureC": {
+        "min": 20,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 50,
+      "co2": "Not needed",
+      "origin": "South America",
+      "description": "Round coin-shaped leaves on long stems. Easy and fast, planted or floating.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/189389672/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/189389672",
+      "imageLicense": "cc0",
+      "source": "https://en.wikipedia.org/wiki/Hydrocotyle_leucocephala"
+    },
+    {
+      "id": "cp-ludwigia-repens",
+      "name": "Ludwigia repens",
+      "aliases": [
+        "ludwigia",
+        "red ludwigia"
+      ],
+      "scientificName": "Ludwigia repens",
+      "light": "Medium to high",
+      "growthRate": "Medium",
+      "placement": "Midground or background",
+      "attachment": "Plant in substrate",
+      "temperatureC": {
+        "min": 20,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 50,
+      "co2": "Helps",
+      "origin": "North America",
+      "description": "Easy stem plant that adds red colour, getting redder with more light.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/34703621/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/34703621",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Ludwigia_repens"
+    },
+    {
+      "id": "cp-rotala-rotundifolia",
+      "name": "Rotala rotundifolia",
+      "aliases": [
+        "rotala"
+      ],
+      "scientificName": "Rotala rotundifolia",
+      "light": "Medium to high",
+      "growthRate": "Fast",
+      "placement": "Background",
+      "attachment": "Plant in substrate",
+      "temperatureC": {
+        "min": 21,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Moderate",
+      "maxHeightCm": 40,
+      "co2": "Helps",
+      "origin": "South and Southeast Asia",
+      "description": "Fine stem plant with pink tips in strong light. Trim often to keep it bushy.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/33791619/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/33791619",
+      "imageLicense": "cc0",
+      "source": "https://en.wikipedia.org/wiki/Rotala_rotundifolia"
+    },
+    {
+      "id": "cp-bacopa-caroliniana",
+      "name": "Bacopa caroliniana",
+      "aliases": [
+        "bacopa",
+        "lemon bacopa"
+      ],
+      "scientificName": "Bacopa caroliniana",
+      "light": "Medium",
+      "growthRate": "Slow",
+      "placement": "Midground or background",
+      "attachment": "Plant in substrate",
+      "temperatureC": {
+        "min": 20,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 40,
+      "co2": "Not needed",
+      "origin": "North America",
+      "description": "Upright stems with thick leaves that smell of lemon when crushed.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/222092915/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/222092915",
+      "imageLicense": "cc-by",
+      "source": "https://en.wikipedia.org/wiki/Bacopa_caroliniana"
+    },
+    {
+      "id": "cp-hygrophila-polysperma",
+      "name": "Hygrophila polysperma",
+      "aliases": [
+        "dwarf hygrophila",
+        "hygro"
+      ],
+      "scientificName": "Hygrophila polysperma",
+      "light": "Low to medium",
+      "growthRate": "Fast",
+      "placement": "Background",
+      "attachment": "Plant in substrate",
+      "temperatureC": {
+        "min": 20,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 8
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 40,
+      "co2": "Not needed",
+      "origin": "South Asia",
+      "description": "Hardy, fast stem plant that soaks up nutrients well.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/106945999/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/106945999",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Hygrophila_polysperma"
+    },
+    {
+      "id": "cp-cabomba",
+      "name": "Cabomba",
+      "aliases": [
+        "fanwort"
+      ],
+      "scientificName": "Cabomba caroliniana",
+      "light": "Medium to high",
+      "growthRate": "Fast",
+      "placement": "Background",
+      "attachment": "Plant in substrate",
+      "temperatureC": {
+        "min": 22,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Moderate",
+      "maxHeightCm": 80,
+      "co2": "Helps",
+      "origin": "Americas",
+      "description": "Feathery bright green stems. Needs good light. Declared invasive in South Africa: never release it outside.",
+      "image": "https://static.inaturalist.org/photos/58257335/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/58257335",
+      "imageLicense": "",
+      "source": "https://en.wikipedia.org/wiki/Cabomba_caroliniana"
+    },
+    {
+      "id": "cp-aponogeton-crispus",
+      "name": "Aponogeton crispus",
+      "aliases": [
+        "aponogeton",
+        "ruffled sword"
+      ],
+      "scientificName": "Aponogeton crispus",
+      "light": "Medium",
+      "growthRate": "Fast",
+      "placement": "Background",
+      "attachment": "Plant the bulb half-buried",
+      "temperatureC": {
+        "min": 22,
+        "max": 28
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 50,
+      "co2": "Not needed",
+      "origin": "Sri Lanka",
+      "description": "Grows from a bulb into long wavy leaves. May rest for a few months, then regrow.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/104633590/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/104633590",
+      "imageLicense": "cc0",
+      "source": "https://en.wikipedia.org/wiki/Aponogeton_crispus"
+    },
+    {
+      "id": "cp-tiger-lotus",
+      "name": "Tiger lotus",
+      "aliases": [
+        "red tiger lotus",
+        "lotus",
+        "nymphaea"
+      ],
+      "scientificName": "Nymphaea zenkeri",
+      "light": "Medium",
+      "growthRate": "Medium",
+      "placement": "Midground",
+      "attachment": "Plant the bulb half-buried",
+      "temperatureC": {
+        "min": 22,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 50,
+      "co2": "Not needed",
+      "origin": "West Africa",
+      "description": "Red, spotted leaves from a bulb. Trim lily pads that reach the surface to keep it low.",
+      "image": "https://static.inaturalist.org/photos/412578852/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/412578852",
+      "imageLicense": "",
+      "source": "https://en.wikipedia.org/wiki/Nymphaea_zenkeri"
+    },
+    {
+      "id": "cp-banana-plant",
+      "name": "Banana plant",
+      "aliases": [
+        "nymphoides aquatica"
+      ],
+      "scientificName": "Nymphoides aquatica",
+      "light": "Medium",
+      "growthRate": "Slow",
+      "placement": "Foreground",
+      "attachment": "Rest the 'bananas' on the substrate",
+      "temperatureC": {
+        "min": 22,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 20,
+      "co2": "Not needed",
+      "origin": "Southeastern USA",
+      "description": "Named after its little banana-shaped roots. Don't bury the bananas.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/304542732/medium.jpg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/304542732",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Nymphoides_aquatica"
+    },
+    {
+      "id": "cp-staurogyne-repens",
+      "name": "Staurogyne repens",
+      "aliases": [
+        "staurogyne"
+      ],
+      "scientificName": "Staurogyne repens",
+      "light": "Medium",
+      "growthRate": "Slow",
+      "placement": "Foreground",
+      "attachment": "Plant in substrate",
+      "temperatureC": {
+        "min": 20,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Easy",
+      "maxHeightCm": 10,
+      "co2": "Helps",
+      "origin": "South America",
+      "description": "Low, bushy foreground plant that stays compact.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/6151293/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/6151293",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Staurogyne_repens"
+    },
+    {
+      "id": "cp-monte-carlo",
+      "name": "Monte Carlo",
+      "aliases": [
+        "micranthemum",
+        "monte carlo carpet"
+      ],
+      "scientificName": "Micranthemum tweediei",
+      "light": "Medium to high",
+      "growthRate": "Medium",
+      "placement": "Foreground carpet",
+      "attachment": "Plant in small clumps",
+      "temperatureC": {
+        "min": 20,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Moderate",
+      "maxHeightCm": 3,
+      "co2": "Helps",
+      "origin": "South America",
+      "description": "Bright green carpet plant. Easier than most carpets but grows best with CO2.",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/66/Micranthemum_tweediei-1-veda_aquarium-bengaluru-India.jpg/960px-Micranthemum_tweediei-1-veda_aquarium-bengaluru-India.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageSourceUrl": "https://commons.wikimedia.org/wiki/File%3AMicranthemum_tweediei-1-veda_aquarium-bengaluru-India.jpg",
+      "imageLicense": "CC BY 4.0",
+      "source": "https://en.wikipedia.org/wiki/Micranthemum_tweediei"
+    },
+    {
+      "id": "cp-dwarf-hairgrass",
+      "name": "Dwarf hairgrass",
+      "aliases": [
+        "hairgrass",
+        "eleocharis"
+      ],
+      "scientificName": "Eleocharis acicularis",
+      "light": "Medium to high",
+      "growthRate": "Medium",
+      "placement": "Foreground carpet",
+      "attachment": "Plant in small clumps",
+      "temperatureC": {
+        "min": 18,
+        "max": 28
+      },
+      "pH": {
+        "min": 6.5,
+        "max": 7.5
+      },
+      "careLevel": "Moderate",
+      "maxHeightCm": 10,
+      "co2": "Helps",
+      "origin": "Worldwide",
+      "description": "Fine grass that spreads into a lawn. Needs good light to carpet.",
+      "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/67/The_complete_aquarium_book%3B_the_care_and_breeding_of_goldfish_and_tropical_fishes_%281936%29_%2820678214831%29.jpg/960px-The_complete_aquarium_book%3B_the_care_and_breeding_of_goldfish_and_tropical_fishes_%281936%29_%2820678214831%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "imageSourceUrl": "https://commons.wikimedia.org/wiki/File%3AThe_complete_aquarium_book%3B_the_care_and_breeding_of_goldfish_and_tropical_fishes_(1936)_(20678214831).jpg",
+      "imageLicense": "Public domain",
+      "source": "https://en.wikipedia.org/wiki/Eleocharis_acicularis"
+    },
+    {
+      "id": "cp-bucephalandra",
+      "name": "Bucephalandra",
+      "aliases": [
+        "buce"
+      ],
+      "scientificName": "Bucephalandra motleyana",
+      "light": "Low to medium",
+      "growthRate": "Very slow",
+      "placement": "Foreground",
+      "attachment": "Tie to wood or rock (don't bury the rhizome)",
+      "temperatureC": {
+        "min": 22,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Moderate",
+      "maxHeightCm": 10,
+      "co2": "Not needed",
+      "origin": "Borneo",
+      "description": "Small, shimmery leaves in many colours. Grows slowly, like Anubias.",
+      "image": "",
+      "imageSourceUrl": "",
+      "imageLicense": "",
+      "source": "https://en.wikipedia.org/wiki/Bucephalandra_motleyana"
+    },
+    {
+      "id": "cp-alternanthera-reineckii",
+      "name": "Alternanthera reineckii",
+      "aliases": [
+        "alternanthera",
+        "scarlet temple",
+        "ar mini"
+      ],
+      "scientificName": "Alternanthera reineckii",
+      "light": "Medium to high",
+      "growthRate": "Slow",
+      "placement": "Midground",
+      "attachment": "Plant in substrate",
+      "temperatureC": {
+        "min": 22,
+        "max": 28
+      },
+      "pH": {
+        "min": 6,
+        "max": 7.5
+      },
+      "careLevel": "Moderate",
+      "maxHeightCm": 40,
+      "co2": "Helps",
+      "origin": "South America",
+      "description": "Deep pink to red leaves. Needs good light and iron-rich fertiliser for colour.",
+      "image": "https://inaturalist-open-data.s3.amazonaws.com/photos/110039911/medium.jpeg",
+      "imageSourceUrl": "https://www.inaturalist.org/photos/110039911",
+      "imageLicense": "cc-by-nc",
+      "source": "https://en.wikipedia.org/wiki/Alternanthera_reineckii"
+    }
+  ]
+}

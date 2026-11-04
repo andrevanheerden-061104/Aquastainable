@@ -13,6 +13,9 @@ export type Species = {
   schoolSize: string;
   summary: string;
   favorite?: boolean;
+  temperament?: string;
+  light?: string;
+  placement?: string;
 };
 
 export type TankConditions = {
