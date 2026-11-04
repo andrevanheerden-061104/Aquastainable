@@ -2,7 +2,7 @@ import { Stack } from 'expo-router';
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router/react-navigation';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
-import { Text } from 'react-native';
+import { Platform, Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -15,6 +15,15 @@ if (process.env.EXPO_PUBLIC_DEMO === '1') {
 }
 
 installAuthHeader();
+
+// Web inside the phone mock-up (build or `npm run web:phone`): the app fills the whole
+// phone screen under the drawn status bar and home bar, so tell the safe-area library
+// how tall they are. It reads its insets from the padding of a hidden element it adds.
+if (Platform.OS === 'web' && typeof window !== 'undefined' && window.self !== window.top) {
+  const style = document.createElement('style');
+  style.textContent = 'body > div[style*="transition-property: padding"]{padding-top:50px !important;padding-bottom:28px !important;}';
+  document.head.appendChild(style);
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();

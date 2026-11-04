@@ -8,6 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "web:phone": "node scripts/phone-dev.js",
     "lint": "expo lint",
     "build:showcase": "node scripts/build-showcase.js",
     "build:showcase:demo": "node scripts/build-showcase.js --demo"
