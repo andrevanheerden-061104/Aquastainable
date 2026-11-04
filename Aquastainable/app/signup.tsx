@@ -16,10 +16,12 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const { loading, signUp } = useAuthApi();
+  const { signUp } = useAuthApi();
+  const [loading, setLoading] = useState(false); // covers the whole sign-up, for the overlay
   const [formError, setFormError] = useState('');
 
   const handleSignUp = async () => {
+    if (loading) return;
     setFormError('');
     if (!username.trim()) {
       setFormError('Please enter a username.');
@@ -37,10 +39,12 @@ export default function SignUpScreen() {
       setFormError('Passwords do not match.');
       return;
     }
+    setLoading(true);
     try {
       await signUp({ email: email.trim(), password, username: username.trim(), profileImageUrl: null });
       router.replace(OTP_ENABLED ? '/verify' : '/loading');
     } catch (err) {
+      setLoading(false);
       setFormError(err instanceof Error ? err.message : 'Unable to create account.');
     }
   };
@@ -48,6 +52,8 @@ export default function SignUpScreen() {
   return (
     <AuthLayout
       mode="signup"
+      loading={loading}
+      loadingMessage="Creating your account…"
       hero={require('../assets/hero/oranda-goldfish.jpg')}
       heroShift={-125}
       titleLight="Start your"
@@ -68,7 +74,7 @@ export default function SignUpScreen() {
       />
       <AuthField icon="lock" secret value={password} onChangeText={setPassword} placeholder="Password (6+ characters)" textContentType="newPassword" />
       <AuthField icon="lock" secret value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Confirm password" textContentType="newPassword" />
-      <SwipeToConfirm label="Swipe to create account" onConfirm={handleSignUp} loading={loading} tone="glass" style={styles.swipe} />
+      <SwipeToConfirm label="Swipe to create account" onConfirm={handleSignUp} disabled={loading} tone="glass" style={styles.swipe} />
     </AuthLayout>
   );
 }

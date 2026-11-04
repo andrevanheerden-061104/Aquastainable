@@ -8,6 +8,7 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Fade from '@/components/ui/Fade';
+import LoadingOverlay from '@/components/ui/LoadingOverlay';
 import { Palette } from '@/constants/palette';
 
 type Props = {
@@ -18,10 +19,12 @@ type Props = {
   titleBold: string;
   subtitle: string;
   mode: 'signin' | 'signup';
+  loading?: boolean;
+  loadingMessage?: string;
   children: ReactNode;
 };
 
-export default function AuthLayout({ hero, heroPosition = 'center', heroShift = 0, titleLight, titleBold, subtitle, mode, children }: Props) {
+export default function AuthLayout({ hero, heroPosition = 'center', heroShift = 0, titleLight, titleBold, subtitle, mode, loading = false, loadingMessage, children }: Props) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -84,6 +87,8 @@ export default function AuthLayout({ hero, heroPosition = 'center', heroShift = 
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <LoadingOverlay visible={loading} message={loadingMessage} />
     </View>
   );
 }

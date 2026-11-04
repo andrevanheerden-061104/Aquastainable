@@ -16,6 +16,20 @@ if (process.env.EXPO_PUBLIC_DEMO === '1') {
 
 installAuthHeader();
 
+// Web: stop Chrome painting autofilled inputs white/blue; keep our dark fields and light text.
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  const autofill = document.createElement('style');
+  autofill.textContent = [
+    'input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, textarea:-webkit-autofill {',
+    '  -webkit-text-fill-color: #F4F6F8 !important;',
+    '  caret-color: #F4F6F8;',
+    '  transition: background-color 9999s ease-out 0s;',
+    '  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;',
+    '}',
+  ].join('\n');
+  document.head.appendChild(autofill);
+}
+
 // Web inside the phone mock-up (build or `npm run web:phone`): the app fills the whole
 // phone screen under the drawn status bar and home bar, so tell the safe-area library
 // how tall they are. It reads its insets from the padding of a hidden element it adds.

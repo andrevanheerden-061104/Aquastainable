@@ -14,10 +14,12 @@ export default function SignInScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { loading, signIn } = useAuthApi();
+  const { signIn } = useAuthApi();
+  const [loading, setLoading] = useState(false); // covers the whole sign-in, for the overlay
   const [formError, setFormError] = useState('');
 
   const handleSignIn = async () => {
+    if (loading) return;
     setFormError('');
     if (!email.trim()) {
       setFormError('Please enter your email address.');
@@ -27,11 +29,13 @@ export default function SignInScreen() {
       setFormError('Please enter your password.');
       return;
     }
+    setLoading(true);
     try {
       await signIn({ email: email.trim(), password });
       // With 2FA on, go to the 6-digit code screen first.
       router.replace(OTP_ENABLED ? '/verify' : '/loading');
     } catch (err) {
+      setLoading(false);
       setFormError(err instanceof Error ? err.message : 'Unable to sign in.');
     }
   };
@@ -39,6 +43,8 @@ export default function SignInScreen() {
   return (
     <AuthLayout
       mode="signin"
+      loading={loading}
+      loadingMessage="Signing you in…"
       hero={require('../assets/hero/betta-bubbles.jpg')}
       titleLight="Welcome"
       titleBold="back to your tanks"
@@ -64,7 +70,7 @@ export default function SignInScreen() {
         textContentType="password"
         autoComplete="password"
       />
-      <SwipeToConfirm label="Swipe to sign in" onConfirm={handleSignIn} loading={loading} tone="glass" style={styles.swipe} />
+      <SwipeToConfirm label="Swipe to sign in" onConfirm={handleSignIn} disabled={loading} tone="glass" style={styles.swipe} />
     </AuthLayout>
   );
 }
