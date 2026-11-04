@@ -28,10 +28,13 @@ let appHtml = fs.readFileSync(appHtmlPath, 'utf8');
 const boot = `<script>
       (function () {
         try {
-          var params = new URLSearchParams(location.search);
-          var route = params.get('route');
-          if (!route) route = location.pathname === '/app.html' ? '/' : location.pathname;
-          history.replaceState(null, '', route);
+          // app.html may be served as /app.html, /app or /app/ (e.g. "npx serve"
+          // strips .html). Any of those means "start of the app".
+          var path = location.pathname;
+          while (path.length > 1 && path.charAt(path.length - 1) === '/') path = path.slice(0, -1);
+          var isAppPage = path === '' || path === '/' || path === '/app' || path === '/app.html';
+          var route = isAppPage ? '/' : location.pathname;
+          history.replaceState(null, '', route + location.hash);
         } catch (e) {}
       })();
     </script>
@@ -40,23 +43,8 @@ appHtml = appHtml.replace('<meta charset="utf-8" />', `<meta charset="utf-8" />\
 fs.writeFileSync(path.join(dist, 'app.html'), appHtml);
 fs.rmSync(appHtmlPath);
 
-// 2. The phone mock-up page.
-const text = demo
-  ? {
-      MODE_CAPTION: 'sample data',
-      MODE_INTRO: 'The real app running with sample tanks, fish and chats.',
-      MODE_CODE_TIP: 'Then type any 6 digits on the code screen; it checks itself.',
-      MODE_NOTE: 'Sample data only: this version does not talk to the live backend.',
-    }
-  : {
-      MODE_CAPTION: 'live app',
-      MODE_INTRO: 'The live app: sign in with your account to see your own tanks, fish and chats.',
-      MODE_CODE_TIP: 'If 2-step sign-in is on, type the 6-digit code from your email; it checks itself.',
-      MODE_NOTE: 'This is the live app connected to the Aquastainable backend.',
-    };
-let page = fs.readFileSync(path.join(root, 'showcase', 'index.html'), 'utf8');
-for (const [key, value] of Object.entries(text)) page = page.split(`{{${key}}}`).join(value);
-fs.writeFileSync(path.join(dist, 'index.html'), page);
+// 2. The phone mock-up page (computer/tablet). Phones are sent straight to the app.
+fs.copyFileSync(path.join(root, 'showcase', 'index.html'), path.join(dist, 'index.html'));
 
 console.log('\nDone: dist/index.html (phone mock-up) + dist/app.html (app).');
 console.log('Preview locally with:  npx serve dist');
