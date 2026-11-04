@@ -35,7 +35,7 @@ export default function AuthLayout({ hero, heroPosition = 'center', heroShift = 
   return (
     <View style={styles.screen}>
       {/* Hero photo + fade */}
-      <View style={styles.hero} pointerEvents="none">
+      <View style={[styles.hero, { pointerEvents: 'none' }]}>
         <Image source={hero} style={[styles.heroImage, heroPosition === 'top' && styles.heroTop, heroShift ? { transform: [{ translateY: heroShift }] } : null]} resizeMode="cover" />
         <Fade stops={[
           { offset: 0, color: '#06080B', opacity: 0.55 },

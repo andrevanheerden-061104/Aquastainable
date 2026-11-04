@@ -126,10 +126,9 @@ export default function HoldAction({
         ]}
       >
         <Animated.View
-          pointerEvents="none"
-          style={[styles.ripple, { width: diameter, height: diameter, borderRadius: diameter / 2, backgroundColor: colors.ripple }, rippleStyle]}
+          style={[styles.ripple, { width: diameter, height: diameter, borderRadius: diameter / 2, backgroundColor: colors.ripple }, rippleStyle, { pointerEvents: 'none' }]}
         />
-        <View pointerEvents="none" style={[styles.content, contentStyle]}>
+        <View style={[styles.content, contentStyle, { pointerEvents: 'none' }]}>
           {children ?? (
             <>
               {icon}

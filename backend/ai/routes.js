@@ -121,7 +121,8 @@ function createAiRouter({ db } = {}) {
       delete tankSourceData.overviewDataFingerprint;
       delete tankSourceData.overviewUpdatedAt;
       const sourceData = { tank: tankSourceData, fish, plants, waterTests };
-      const fingerprint = JSON.stringify({ tank: tankSourceData, fish, plants, waterTests });
+      // promptVersion: bump when the overview prompt changes so cached overviews regenerate.
+      const fingerprint = JSON.stringify({ promptVersion: 2, tank: tankSourceData, fish, plants, waterTests });
       const stored = tankDoc.data();
 
       if (stored.overview && stored.overviewDataFingerprint === fingerprint) {

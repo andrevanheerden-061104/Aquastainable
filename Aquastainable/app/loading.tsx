@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Animated, StyleSheet, Easing } from 'react-native';
 import Svg, { Path, Rect, G, Defs, ClipPath, Circle } from 'react-native-svg';
-import Colors from './colors';
+import Colors from '@/lib/colors';
 
 type Props = {
   progress?: number; 
@@ -17,8 +17,10 @@ const R = 120;
 const CX = SIZE / 2;
 const CY = SIZE / 2;
 
-const AnimatedRect = Animated.createAnimatedComponent(Rect);
-const AnimatedPath = Animated.createAnimatedComponent(Path);
+// The water level is drawn from displayPercent (updated every frame by the listener
+// below) with plain SVG shapes. Animated SVG components pass a `collapsable` prop that
+// breaks on the web ("Received `false` for a non-boolean attribute").
+const waveFor = (y: number) => `M0 ${y} Q ${SIZE / 4} ${y - 6} ${SIZE / 2} ${y} T ${SIZE} ${y} L ${SIZE} ${y + 10} L 0 ${y + 10} Z`;
 
 const LoadingScreen: React.FC<Props> = ({ progress, label, duration = 3000 }) => {
   const router = useRouter();
@@ -64,17 +66,8 @@ const LoadingScreen: React.FC<Props> = ({ progress, label, duration = 3000 }) =>
     return () => clearTimeout(timeout);
   }, [duration, progress, router]);
 
-  // y = CY + R at 0% (fully below the circle, so nothing shows)
-  // y = CY - R at 100% (fully above the circle, so it's completely full)
-  const waterY = fill.interpolate({ inputRange: [0, 100], outputRange: [CY + R, CY - R] });
-
-  const waveD = fill.interpolate({
-    inputRange: [0, 100],
-    outputRange: [
-      `M0 ${CY + R} Q ${SIZE / 4} ${CY + R - 6} ${SIZE / 2} ${CY + R} T ${SIZE} ${CY + R} L ${SIZE} ${CY + R + 10} L 0 ${CY + R + 10} Z`,
-      `M0 ${CY - R} Q ${SIZE / 4} ${CY - R - 6} ${SIZE / 2} ${CY - R} T ${SIZE} ${CY - R} L ${SIZE} ${CY - R + 10} L 0 ${CY - R + 10} Z`,
-    ],
-  });
+  // y = CY + R at 0% (empty), CY - R at 100% (full)
+  const waterY = CY + R - (displayPercent / 100) * 2 * R;
 
   return (
     <View style={styles.container}>
@@ -87,9 +80,9 @@ const LoadingScreen: React.FC<Props> = ({ progress, label, duration = 3000 }) =>
           </Defs>
 
           <G clipPath="url(#circleClip)">
-            <AnimatedRect x={0} y={waterY} width={SIZE} height={SIZE} fill={Colors.waterFill} />
+            <Rect x={0} y={waterY} width={SIZE} height={SIZE} fill={Colors.waterFill} />
             {/* the pale, slightly wavy surface line right at the top of the water */}
-            <AnimatedPath d={waveD} fill={Colors.waterFillLight} />
+            <Path d={waveFor(waterY)} fill={Colors.waterFillLight} />
           </G>
         </Svg>
 

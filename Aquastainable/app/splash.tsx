@@ -1,9 +1,9 @@
 
 
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Image, StyleSheet, View, Platform } from 'react-native';
 import Svg, { Path, Ellipse, Circle } from 'react-native-svg';
-import Colors from './colors';
+import Colors from '@/lib/colors';
 
 
 const LOCKUP_ASPECT = 4996 / 680;
@@ -81,27 +81,27 @@ const SplashScreen: React.FC<Props> = ({ onFinish }) => {
         toValue: PUDDLE_Y - BULB_Y,
         duration: 260,
         easing: Easing.in(Easing.quad),
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }).start(() => {
         // 3) impact — puddle spreads, ripple expands, tiny droplets bounce
         fallOpacity.setValue(0);
 
         Animated.sequence([
-          Animated.spring(puddleScale, { toValue: 1.1, friction: 4, useNativeDriver: true }),
-          Animated.spring(puddleScale, { toValue: 1, friction: 5, useNativeDriver: true }),
+          Animated.spring(puddleScale, { toValue: 1.1, friction: 4, useNativeDriver: Platform.OS !== 'web' }),
+          Animated.spring(puddleScale, { toValue: 1, friction: 5, useNativeDriver: Platform.OS !== 'web' }),
         ]).start();
 
         Animated.timing(ripple, {
           toValue: 1,
           duration: 700,
           easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }).start();
 
         const bounce = (val: Animated.Value) =>
           Animated.sequence([
-            Animated.timing(val, { toValue: 1, duration: 160, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-            Animated.timing(val, { toValue: 0, duration: 220, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+            Animated.timing(val, { toValue: 1, duration: 160, easing: Easing.out(Easing.quad), useNativeDriver: Platform.OS !== 'web' }),
+            Animated.timing(val, { toValue: 0, duration: 220, easing: Easing.in(Easing.quad), useNativeDriver: Platform.OS !== 'web' }),
           ]);
         bounce(bounceL).start();
         Animated.sequence([Animated.delay(60), bounce(bounceR)]).start();
@@ -110,10 +110,10 @@ const SplashScreen: React.FC<Props> = ({ onFinish }) => {
         Animated.sequence([
           Animated.delay(280),
           Animated.parallel([
-            Animated.timing(logoOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+            Animated.timing(logoOpacity, { toValue: 1, duration: 400, useNativeDriver: Platform.OS !== 'web' }),
             Animated.sequence([
-              Animated.timing(logoScale, { toValue: 1.1, duration: 220, useNativeDriver: true }),
-              Animated.spring(logoScale, { toValue: 1, friction: 4, useNativeDriver: true }),
+              Animated.timing(logoScale, { toValue: 1.1, duration: 220, useNativeDriver: Platform.OS !== 'web' }),
+              Animated.spring(logoScale, { toValue: 1, friction: 4, useNativeDriver: Platform.OS !== 'web' }),
             ]),
           ]),
         ]).start(() => {
@@ -126,19 +126,19 @@ const SplashScreen: React.FC<Props> = ({ onFinish }) => {
                 toValue: ICON_SLIDE_X,
                 duration: 550,
                 easing: Easing.inOut(Easing.quad),
-                useNativeDriver: true,
+                useNativeDriver: Platform.OS !== 'web',
               }),
               Animated.timing(logoScale, {
                 toValue: ICON_FINAL_SCALE,
                 duration: 550,
                 easing: Easing.inOut(Easing.quad),
-                useNativeDriver: true,
+                useNativeDriver: Platform.OS !== 'web',
               }),
             ]),
           ]).start(() => {
             Animated.parallel([
-              Animated.timing(lockupOpacity, { toValue: 1, duration: 280, useNativeDriver: true }),
-              Animated.timing(logoOpacity, { toValue: 0, duration: 280, useNativeDriver: true }),
+              Animated.timing(lockupOpacity, { toValue: 1, duration: 280, useNativeDriver: Platform.OS !== 'web' }),
+              Animated.timing(logoOpacity, { toValue: 0, duration: 280, useNativeDriver: Platform.OS !== 'web' }),
             ]).start();
           });
         });

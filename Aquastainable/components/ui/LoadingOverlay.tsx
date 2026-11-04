@@ -59,9 +59,7 @@ const styles = StyleSheet.create({
   },
   card: {
     alignItems: 'center', gap: 20, paddingVertical: 28, paddingHorizontal: 36, borderRadius: 28,
-    backgroundColor: 'rgba(23,26,33,0.92)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)',
-    shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }, elevation: 12,
-  },
+    backgroundColor: 'rgba(23,26,33,0.92)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)', boxShadow: '0px 12px 24px rgba(0, 0, 0, 0.5)' },
   center: { width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' },
   pulse: { position: 'absolute', width: SIZE, height: SIZE, borderRadius: SIZE / 2, backgroundColor: Palette.primary },
   track: { position: 'absolute', width: SIZE, height: SIZE, borderRadius: SIZE / 2, borderWidth: 3, borderColor: 'rgba(255,255,255,0.08)' },

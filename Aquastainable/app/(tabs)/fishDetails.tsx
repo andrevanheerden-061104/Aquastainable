@@ -1,23 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 
-import MainFishDisplay from '@/components/fish&Plants/MainFishDisplay';
-import SpeciesOverview from '@/components/fish&Plants/SpeciesOverview';
-import CareCards from '@/components/fish&Plants/CareCards';
+import Section from '@/components/kit/Section';
+import SpecGrid, { SpecItem } from '@/components/kit/SpecGrid';
+import SpeciesHero from '@/components/kit/SpeciesHero';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Palette } from '@/constants/palette';
 import FishLogGrid from '@/components/fish&Plants/FishLogGrid';
 import FishSicknessAssistant, { FishSicknessPrefill } from '@/components/fish&Plants/FishSicknessAssistant';
 import { auth } from '@/firebase';
-import { TankFish, useFishApi } from '@/app/hooks/useFishApi';
-
-const defaultCareItems = [
-  { label: 'Temp', value: 'Not available' },
-  { label: 'pH range', value: 'Not available' },
-  { label: 'Water space', value: 'Not available' },
-  { label: 'School size', value: 'Not available' },
-];
+import { TankFish, useFishApi } from '@/lib/hooks/useFishApi';
 
 export default function FishDetailsScreen() {
   const router = useRouter();
@@ -56,36 +50,47 @@ export default function FishDetailsScreen() {
   }, [currentUserId, speciesId, getUserFish, enrichFish]);
 
   const mainSpecies = fish.find((item) => item.id === speciesId || item.fishId === speciesId);
-  const careItems = [
-    { label: 'Temp', value: mainSpecies?.bestTempC || defaultCareItems[0].value },
-    { label: 'pH range', value: mainSpecies?.phRange || defaultCareItems[1].value },
-    { label: 'Water space', value: mainSpecies?.waterSpace || defaultCareItems[2].value },
-    { label: 'School size', value: mainSpecies?.schoolSize || defaultCareItems[3].value },
+  const temperament = String(mainSpecies?.temperament || '').trim();
+  const calm = /peace|calm|gentle/i.test(temperament);
+
+  const specs: SpecItem[] = [
+    { icon: 'thermometer', label: 'Temperature', value: mainSpecies?.bestTempC || mainSpecies?.tempC ? `${mainSpecies?.bestTempC || mainSpecies?.tempC}°C`.replace('°C°C', '°C') : null },
+    { icon: 'drop.fill', label: 'pH range', value: mainSpecies?.phRange || mainSpecies?.pH },
+    { icon: 'ruler', label: 'Adult size', value: mainSpecies?.adultLengthCm ? `${mainSpecies.adultLengthCm} cm` : null },
+    { icon: 'person.3', label: 'School size', value: mainSpecies?.schoolSize },
+    { icon: 'water.waves', label: 'Swims in', value: mainSpecies?.waterSpace },
+    { icon: 'hourglass', label: 'Lifespan', value: mainSpecies?.lifespan },
+  ];
+
+  const chips = [
+    ...(temperament ? [{ label: temperament, tone: (calm ? 'good' : 'warn') as 'good' | 'warn' }] : []),
+    ...(mainSpecies?.tankName ? [{ label: mainSpecies.tankName }] : []),
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={{ marginHorizontal: 0 }}>
-          <MainFishDisplay
-            image={mainSpecies?.image ? { uri: mainSpecies.image } : undefined}
-            title={mainSpecies?.name ?? 'Fish'}
-            origin={mainSpecies?.origin}
-            lifespan={mainSpecies?.lifespan}
-            preferredTempC={mainSpecies?.bestTempC || mainSpecies?.preferredTempC}
-            tankName={mainSpecies?.tankName}
-            phLevel={mainSpecies?.phRange || mainSpecies?.pH}
-            feeding={mainSpecies?.feedType || mainSpecies?.feeding}
-          />
-        </View>
+        <SpeciesHero
+          image={mainSpecies?.image ? { uri: mainSpecies.image } : null}
+          title={mainSpecies?.name ?? 'Fish'}
+          subtitle={mainSpecies?.scientificName}
+          chips={chips}
+        />
 
         <View style={styles.paddedContent}>
-          <SpeciesOverview
-            title="Species details"
-            description={mainSpecies?.description || 'Care information is being loaded for this species.'}
-          />
+          <Section title="Specifications" icon="chart.bar">
+            <SpecGrid items={specs} />
+          </Section>
 
-          <CareCards cards={careItems} />
+          <Section title="Overview" icon="info.circle">
+            <Text style={styles.paragraph}>{mainSpecies?.description || 'Care information is being loaded for this species.'}</Text>
+            {(mainSpecies?.origin || mainSpecies?.feedType || mainSpecies?.feeding) ? (
+              <View style={styles.facts}>
+                {mainSpecies?.origin ? <Fact icon="globe" label="Origin" value={mainSpecies.origin} /> : null}
+                {(mainSpecies?.feedType || mainSpecies?.feeding) ? <Fact icon="fork.knife" label="Food" value={String(mainSpecies?.feedType || mainSpecies?.feeding)} /> : null}
+              </View>
+            ) : null}
+          </Section>
 
           <FishSicknessAssistant
             speciesName={mainSpecies?.name ?? 'fish'}
@@ -102,11 +107,7 @@ export default function FishDetailsScreen() {
             }}
           />
 
-          <View style={styles.logSection}>
-            <SpeciesOverview
-              title="Fish school"
-              description="Log each fish in your tank with a name and photo. The last card is a placeholder to add a new fish in the future."
-            />
+          <Section title="Your fish" icon="heart" subtitle="Give each fish in your school a name and a photo.">
             <FishLogGrid
               userId={currentUserId || ''}
               tankId={mainSpecies?.tankId || ''}
@@ -117,25 +118,33 @@ export default function FishDetailsScreen() {
                 )));
               }}
             />
-          </View>
+          </Section>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
+  );
+}
+
+function Fact({ icon, label, value }: { icon: string; label: string; value: string }) {
+  return (
+    <View style={styles.fact}>
+      <View style={styles.factIcon}><IconSymbol name={icon as any} size={16} color={Palette.accent} /></View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.factLabel}>{label}</Text>
+        <Text style={styles.factValue}>{value}</Text>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#090A0F',
-  },
-  content: {
-    paddingBottom: 40,
-  },
-  paddedContent: {
-    paddingHorizontal: 20,
-  },
-  logSection: {
-    marginTop: 24,
-  },
+  container: { flex: 1, backgroundColor: Palette.background },
+  content: { paddingBottom: 48 },
+  paddedContent: { paddingHorizontal: 20 },
+  paragraph: { color: Palette.textMuted, fontSize: 15, lineHeight: 23 },
+  facts: { gap: 8, marginTop: 14 },
+  fact: { flexDirection: 'row', gap: 12, alignItems: 'center', padding: 12, borderRadius: 18, backgroundColor: Palette.surfaceRaised, borderWidth: 1, borderColor: Palette.border },
+  factIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: Palette.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  factLabel: { color: Palette.textFaint, fontSize: 11, fontFamily: 'Montserrat_600SemiBold' },
+  factValue: { color: Palette.text, fontSize: 14, lineHeight: 19, marginTop: 1 },
 });

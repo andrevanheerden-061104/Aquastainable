@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Image, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -7,8 +7,11 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/firebase';
 import AddNewFishCard from '@/components/fish&Plants/AddNewFishCard';
 import AddFishModal from '@/components/fish&Plants/AddFishModal';
-import HoldActionButton from '@/components/fish&Plants/HoldActionButton';
-import { TankFish, useFishApi } from '@/app/hooks/useFishApi';
+import HoldAction from '@/components/gestures/HoldAction';
+import PhotoCard from '@/components/kit/PhotoCard';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Palette } from '@/constants/palette';
+import { TankFish, useFishApi } from '@/lib/hooks/useFishApi';
 
 type SpeciesCardItem = TankFish;
 
@@ -89,8 +92,12 @@ export default function FishSpeciesScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Fish Species</Text>
-        <Text style={styles.subtitle}>Your fish, tank by tank. Press and hold Edit or Delete to use them.</Text>
+        <Text style={styles.titleLight}>Your</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>Fish</Text>
+          {species.length ? <View style={styles.count}><Text style={styles.countText}>{species.length}</Text></View> : null}
+        </View>
+        <Text style={styles.subtitle}>Tap a fish to see its care. Press and hold to edit or delete.</Text>
       </View>
 
       <FlatList
@@ -104,49 +111,46 @@ export default function FishSpeciesScreen() {
             return <AddNewFishCard onPress={() => setAddFishVisible(true)} />;
           }
 
-          const imageSource = item.image ? { uri: item.image } : undefined;
           return (
-            <View style={styles.card}>
-              <TouchableOpacity onPress={() => handlePress(item)} activeOpacity={0.9}>
-              {imageSource ? <Image source={imageSource} style={styles.image} resizeMode="cover" /> : <View style={styles.imageEmpty} />}
-              <View style={styles.cardBody}>
-                <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.scientific}>{item.speciesName}</Text>
-                <View style={styles.divider} />
-                <View style={styles.infoRow}>
-                  <Text style={styles.label}>Tank</Text>
-                  <Text style={[styles.value, styles.compactValue]} numberOfLines={1}>
-                    {item.tankName || 'Unnamed tank'}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.label}>School size</Text>
-                  <Text style={[styles.value, styles.compactValue]} numberOfLines={1}>
-                    {formatSchoolSize(item.schoolSize)}
-                  </Text>
-                </View>
-              </View>
-              </TouchableOpacity>
-              <View style={styles.actionRow}>
-                <HoldActionButton label="Edit" onHold={() => openFishEditor(item)} fillColor="#2E8CA6" />
-                <HoldActionButton label="Delete" onHold={() => { void deleteFish(item); }} fillColor="#B83A45" style={styles.deleteAction} />
-              </View>
-            </View>
+            <PhotoCard
+              image={item.image}
+              title={item.name}
+              subtitle={`${item.tankName || 'Unnamed tank'} · ${formatSchoolSize(item.schoolSize)}`}
+              badge={item.temperament || undefined}
+              onPress={() => handlePress(item)}
+              height={200}
+              style={styles.card}
+              footer={(
+                <>
+                  <HoldAction onComplete={() => openFishEditor(item)} tone="primary" label="Edit" icon={<IconSymbol name="pencil" size={14} color={Palette.text} />} style={styles.cardAction} textStyle={styles.cardActionText} />
+                  <HoldAction onComplete={() => { void deleteFish(item); }} tone="danger" speed="confirm" accessibilityLabel={`Hold to delete ${item.name}`} style={styles.cardIcon} contentStyle={{ gap: 0 }}>
+                    <IconSymbol name="trash" size={16} color={Palette.dangerText} />
+                  </HoldAction>
+                </>
+              )}
+            />
           );
         }}
       />
       {loading ? <ActivityIndicator color="#FFFFFF" style={styles.loading} /> : null}
-      {!loading && !error && species.length === 0 ? <Text style={styles.emptyState}>No fish have been added to your tanks yet.</Text> : null}
+      {!loading && !error && species.length === 0 ? <Text style={styles.emptyState}>No fish yet. Hold the card above to add your first fish.</Text> : null}
       {error ? <Text style={styles.emptyState}>Unable to load your fish right now.</Text> : null}
       <AddFishModal visible={addFishVisible} onClose={() => { setAddFishVisible(false); loadFish(); }} />
-      <Modal visible={Boolean(editingFish)} transparent animationType="fade" onRequestClose={() => setEditingFish(null)}>
+      <Modal visible={Boolean(editingFish)} transparent animationType="slide" onRequestClose={() => setEditingFish(null)}>
         <View style={styles.modalBackdrop}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setEditingFish(null)} accessibilityLabel="Close" />
           <View style={styles.editModal}>
-            <Text style={styles.editTitle}>Edit school size</Text>
-            <Text style={styles.editSubtitle}>{editingFish?.name || 'Fish'}</Text>
-            <TextInput value={schoolSizeDraft} onChangeText={setSchoolSizeDraft} keyboardType="numeric" placeholder="School size" placeholderTextColor="#6E7684" style={styles.editInput} />
-            <HoldActionButton label={actionLoading ? 'Saving...' : 'Hold to save'} onHold={() => { void saveFishEdit(); }} fillColor="#2E8CA6" />
-            <TouchableOpacity style={styles.cancelButton} onPress={() => setEditingFish(null)}><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
+            <View style={styles.grabber} />
+            <Text style={styles.editEyebrow}>Edit school</Text>
+            <Text style={styles.editTitle}>{editingFish?.name || 'Fish'}</Text>
+            <Text style={styles.editSubtitle}>How many of this fish live in {editingFish?.tankName || 'this tank'}?</Text>
+            <View style={styles.stepper}>
+              <Pressable onPress={() => setSchoolSizeDraft((v) => String(Math.max(1, (parseInt(v, 10) || 1) - 1)))} style={styles.stepBtn} accessibilityLabel="One fewer"><Text style={styles.stepText}>−</Text></Pressable>
+              <TextInput value={schoolSizeDraft} onChangeText={(v) => setSchoolSizeDraft(v.replace(/[^0-9]/g, ''))} keyboardType="numeric" style={styles.stepInput} />
+              <Pressable onPress={() => setSchoolSizeDraft((v) => String((parseInt(v, 10) || 0) + 1))} style={styles.stepBtn} accessibilityLabel="One more"><Text style={styles.stepText}>+</Text></Pressable>
+            </View>
+            <HoldAction onComplete={() => { void saveFishEdit(); }} disabled={actionLoading} tone="primary" label={actionLoading ? 'Saving…' : 'Hold to save'} icon={<IconSymbol name="checkmark" size={18} color={Palette.text} />} style={{ minHeight: 54 }} />
+            <Text style={styles.cancelHint}>Tap outside to cancel</Text>
           </View>
         </View>
       </Modal>
@@ -155,108 +159,31 @@ export default function FishSpeciesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#090A0F',
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 56,
-    paddingBottom: 12,
-  },
-  title: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
-  },
-  subtitle: {
-    color: '#8F97A6',
-    fontSize: 14,
-    marginTop: 6,
-  },
-  list: {
-    paddingHorizontal: 12,
-    paddingBottom: 32,
-    paddingTop: 8,
-  },
-  row: {
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  card: {
-    backgroundColor: '#14151B',
-    borderRadius: 22,
-    overflow: 'hidden',
-    marginTop: 8,
-    marginHorizontal: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    width: '46%',
-  },
-  image: {
-    width: '100%',
-    height: 150,
-  },
-  imageEmpty: {
-    height: 150,
-    backgroundColor: '#20232C',
-  },
-  cardBody: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  name: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  scientific: {
-    color: '#8F97A6',
-    fontSize: 13,
-    marginTop: 4,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  label: {
-    color: '#8F97A6',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  value: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  compactValue: {
-    maxWidth: 90,
-    textAlign: 'right',
-  },
-  loading: {
-    marginTop: 16,
-  },
-  emptyState: {
-    color: '#8F97A6',
-    textAlign: 'center',
-    marginHorizontal: 20,
-    marginTop: 20,
-  },
-  actionRow: { gap: 8, padding: 10 },
-  deleteAction: { backgroundColor: '#6F2028' },
-  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.72)', justifyContent: 'center', padding: 24 },
-  editModal: { backgroundColor: '#14151B', borderRadius: 18, padding: 20 },
-  editTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: '800' },
-  editSubtitle: { color: '#8F97A6', marginTop: 4, marginBottom: 16 },
-  editInput: { color: '#FFFFFF', backgroundColor: '#20232C', borderRadius: 10, padding: 12, marginBottom: 12 },
-  cancelButton: { alignItems: 'center', padding: 12, marginTop: 8 },
-  cancelText: { color: '#A8C4CB', fontWeight: '700' },
+  container: { flex: 1, backgroundColor: Palette.background },
+  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 14 },
+  titleLight: { color: 'rgba(244,246,248,0.8)', fontSize: 26, fontFamily: 'Montserrat_400Regular' },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  title: { color: Palette.text, fontSize: 34, lineHeight: 40, fontFamily: 'Montserrat_700Bold' },
+  count: { minWidth: 30, height: 30, paddingHorizontal: 8, borderRadius: 15, backgroundColor: Palette.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  countText: { color: Palette.primaryBright, fontSize: 14, fontFamily: 'Montserrat_700Bold' },
+  subtitle: { color: Palette.textMuted, fontSize: 13, lineHeight: 19, marginTop: 6 },
+  list: { paddingHorizontal: 16, paddingBottom: 48, gap: 12 },
+  row: { gap: 12 },
+  card: { flex: 1, maxWidth: '50%' },
+  cardAction: { flex: 1, minHeight: 38, paddingHorizontal: 10 },
+  cardActionText: { fontSize: 13 },
+  cardIcon: { width: 38, height: 38, minHeight: 38, borderRadius: 19, paddingHorizontal: 0 },
+  loading: { marginTop: 24 },
+  emptyState: { color: Palette.textMuted, textAlign: 'center', paddingHorizontal: 32, marginTop: 8, marginBottom: 24 },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(5,7,10,0.7)', justifyContent: 'flex-end' },
+  editModal: { backgroundColor: Palette.surface, borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 22, paddingTop: 0, paddingBottom: 34, gap: 4, borderWidth: 1, borderColor: Palette.border },
+  grabber: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: Palette.borderStrong, marginVertical: 10 },
+  editEyebrow: { color: Palette.primaryBright, fontSize: 12, letterSpacing: 1.4, textTransform: 'uppercase', fontFamily: 'Montserrat_700Bold' },
+  editTitle: { color: Palette.text, fontSize: 24, fontFamily: 'Montserrat_700Bold' },
+  editSubtitle: { color: Palette.textMuted, fontSize: 14, marginBottom: 14 },
+  stepper: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+  stepBtn: { width: 54, height: 54, borderRadius: 27, backgroundColor: Palette.surfaceRaised, borderWidth: 1, borderColor: Palette.border, alignItems: 'center', justifyContent: 'center' },
+  stepText: { color: Palette.text, fontSize: 24, fontFamily: 'Montserrat_600SemiBold' },
+  stepInput: { flex: 1, height: 54, borderRadius: 18, backgroundColor: Palette.surfaceRaised, borderWidth: 1, borderColor: Palette.border, color: Palette.text, fontSize: 22, textAlign: 'center', fontFamily: 'Montserrat_700Bold' },
+  cancelHint: { color: Palette.textFaint, fontSize: 12, textAlign: 'center', marginTop: 10 },
 });

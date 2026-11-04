@@ -1,6 +1,7 @@
 // Renders the assistant's short answer format:
-//   **Headline**          -> big first line (the direct answer)
-//   plain line            -> one-sentence explanation
+//   plain paragraph       -> body text (the direct answer + explanation)
+//   **Whole bold line**   -> headline if first, otherwise a small section label
+//   "See a vet ..." line  -> highlighted warning callout
 //   **Do this** / **Watch for** -> small section label
 //   - item                -> bullet with a dot
 //   [label](https://...)  -> link
@@ -8,13 +9,15 @@
 import React from 'react';
 import { Linking, StyleSheet, Text, View } from 'react-native';
 
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Palette } from '@/constants/palette';
 
 type Block =
   | { kind: 'headline'; text: string }
   | { kind: 'label'; text: string }
   | { kind: 'bullet'; text: string; index: number }
-  | { kind: 'text'; text: string };
+  | { kind: 'text'; text: string }
+  | { kind: 'warn'; text: string };
 
 const stripBold = (text: string) => text.replace(/\*\*(.+?)\*\*/g, '$1');
 
@@ -35,7 +38,11 @@ export function parseAnswer(answer: string): Block[] {
       blocks.push({ kind: isFirst ? 'headline' : 'label', text: wholeBold[1].replace(/:$/, '') });
       return;
     }
-    blocks.push({ kind: blocks.length === 0 ? 'headline' : 'text', text: clean });
+    if (/^(see (a|an) (vet|fish shop)|get help|call a vet)/i.test(stripBold(clean))) {
+      blocks.push({ kind: 'warn', text: clean });
+      return;
+    }
+    blocks.push({ kind: 'text', text: clean });
   });
   return blocks;
 }
@@ -77,6 +84,14 @@ export default function AnswerCard({ answer, tone = 'default' }: { answer: strin
             </View>
           );
         }
+        if (block.kind === 'warn') {
+          return (
+            <View key={index} style={styles.warn}>
+              <IconSymbol name="exclamationmark.triangle" size={16} color={Palette.warning} />
+              <RichText text={block.text} style={styles.warnText} />
+            </View>
+          );
+        }
         return <RichText key={index} text={block.text} style={styles.body} />;
       })}
     </View>
@@ -91,7 +106,9 @@ const styles = StyleSheet.create({
   headlineUrgent: { color: '#FFC9C9' },
   single: { color: Palette.text, fontSize: 15, lineHeight: 22 },
   label: { color: Palette.primaryBright, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: 'Montserrat_700Bold', marginTop: 6 },
-  body: { color: Palette.textMuted, fontSize: 14, lineHeight: 21 },
+  body: { color: Palette.text, fontSize: 15, lineHeight: 23 },
+  warn: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', backgroundColor: Palette.warningSoft, borderRadius: 14, padding: 12, marginTop: 4 },
+  warnText: { flex: 1, color: Palette.text, fontSize: 14, lineHeight: 20 },
   bulletRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Palette.primaryBright, marginTop: 8 },
   dotUrgent: { backgroundColor: Palette.danger },

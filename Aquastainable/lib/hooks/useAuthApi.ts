@@ -4,7 +4,7 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'fire
 
 import { auth } from '@/firebase';
 
-import { useBackendApi } from './useBackendApi';
+import { useBackendApi } from '@/lib/hooks/useBackendApi';
 
 type SignUpPayload = {
   email: string;

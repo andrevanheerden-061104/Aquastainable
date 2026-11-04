@@ -9,8 +9,8 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { FadeInUp, FadeOutUp, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useTankApi } from '@/app/hooks/useTankApi';
-import useWaterTestApi, { WaterTestRecord } from '@/app/hooks/useWaterTestApi';
+import { useTankApi } from '@/lib/hooks/useTankApi';
+import useWaterTestApi, { WaterTestRecord } from '@/lib/hooks/useWaterTestApi';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Palette } from '@/constants/palette';
 import { auth } from '@/firebase';
@@ -82,9 +82,10 @@ export default function WaterChangeToast() {
   const urgentCount = reminders.filter((item) => item.urgent).length;
 
   return (
-    <View pointerEvents="box-none" style={[styles.layer, { top: insets.top + 8 }]}>
+    <View style={[styles.layer, { top: insets.top + 8 }, { pointerEvents: 'box-none' }]}>
       <GestureDetector gesture={swipe}>
-        <Animated.View entering={FadeInUp.duration(260)} exiting={FadeOutUp.duration(180)} style={[styles.card, urgentCount > 0 ? styles.cardUrgent : null, style]}>
+        <Animated.View entering={FadeInUp.duration(260)} exiting={FadeOutUp.duration(180)}>
+        <Animated.View style={[styles.card, urgentCount > 0 ? styles.cardUrgent : null, style]}>
           <View style={styles.headRow}>
             <View style={[styles.icon, urgentCount ? styles.iconUrgent : null]}>
               <IconSymbol name="drop.fill" size={16} color={urgentCount ? Palette.warning : Palette.primaryBright} />
@@ -101,6 +102,7 @@ export default function WaterChangeToast() {
           ))}
           <View style={styles.grabber} />
         </Animated.View>
+        </Animated.View>
       </GestureDetector>
     </View>
   );
@@ -110,9 +112,7 @@ const styles = StyleSheet.create({
   layer: { position: 'absolute', left: 12, right: 12, zIndex: 50 },
   card: {
     backgroundColor: 'rgba(23,26,33,0.96)', borderRadius: 20, borderWidth: 1, borderColor: Palette.borderStrong,
-    paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10,
-    shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 10,
-  },
+    paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10, boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.4)' },
   cardUrgent: { borderColor: 'rgba(251,191,36,0.4)' },
   headRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
   icon: { width: 28, height: 28, borderRadius: 14, backgroundColor: Palette.primarySoft, alignItems: 'center', justifyContent: 'center' },

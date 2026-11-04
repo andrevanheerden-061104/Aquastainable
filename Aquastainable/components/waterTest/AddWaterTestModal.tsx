@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Alert, Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import SwipeCheckButton from '../fish&Plants/SwipeCheckButton';
-import useWaterTestApi from '../../app/hooks/useWaterTestApi';
+import useWaterTestApi from '@/lib/hooks/useWaterTestApi';
 
 type Props = { visible: boolean; tankId: string; userId: string; onClose: () => void; onSaved: () => void };
 
@@ -13,7 +13,7 @@ export default function AddWaterTestModal({ visible, tankId, userId, onClose, on
   const [validationError, setValidationError] = useState('');
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7, base64: true });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7, base64: true });
     if (!result.canceled && result.assets[0]?.base64) setImage(`data:image/jpeg;base64,${result.assets[0].base64}`);
   };
 
@@ -68,7 +68,7 @@ export default function AddWaterTestModal({ visible, tankId, userId, onClose, on
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(7,12,21,0.75)', justifyContent: 'center' },
-  dismiss: { ...StyleSheet.absoluteFillObject },
+  dismiss: { ...StyleSheet.absoluteFill },
   card: { marginHorizontal: 18, maxHeight: '86%', borderRadius: 24, backgroundColor: '#16151A', overflow: 'hidden' },
   content: { padding: 22 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },

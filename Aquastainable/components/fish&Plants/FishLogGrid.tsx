@@ -4,7 +4,7 @@ import { Alert, View, StyleSheet } from 'react-native';
 import FishLogCard from './FishLogCard';
 import AddNewFishCard from './AddNewFishCard';
 import AddSchoolFishModal, { FishRecord } from './AddSchoolFishModal';
-import { IndividualFish, useFishApi } from '../../app/hooks/useFishApi';
+import { IndividualFish, useFishApi } from '@/lib/hooks/useFishApi';
 
 type Props = {
   userId: string;

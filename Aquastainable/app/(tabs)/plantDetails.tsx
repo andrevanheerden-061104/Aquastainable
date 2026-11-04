@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 
-import MainFishDisplay from '@/components/fish&Plants/MainFishDisplay';
-import SpeciesOverview from '@/components/fish&Plants/SpeciesOverview';
-import CareCards from '@/components/fish&Plants/CareCards';
+import Section from '@/components/kit/Section';
+import SpecGrid, { SpecItem } from '@/components/kit/SpecGrid';
+import SpeciesHero from '@/components/kit/SpeciesHero';
+import { Palette } from '@/constants/palette';
 import { auth } from '@/firebase';
-import { SavedPlant, usePlantApi } from '@/app/hooks/usePlantApi';
+import { SavedPlant, usePlantApi } from '@/lib/hooks/usePlantApi';
 
 export default function PlantDetailsScreen() {
   const { speciesId } = useLocalSearchParams<{ speciesId?: string }>();
@@ -33,47 +33,45 @@ export default function PlantDetailsScreen() {
   }, [currentUserId, getUserPlants]);
 
   const mainPlant = plants.find((plant) => plant.id === speciesId || plant.plantId === speciesId);
-  const careItems = mainPlant ? [
-    { label: 'Light', value: mainPlant.light || 'Not available' },
-    { label: 'Growth', value: mainPlant.growthRate || 'Not available' },
-    { label: 'Placement', value: mainPlant.placement || 'Not available' },
-    { label: 'pH range', value: mainPlant.phRange || 'Not available' },
-  ] : [];
+  const specs: SpecItem[] = [
+    { icon: 'sun.max', label: 'Light', value: mainPlant?.light, tone: 'accent' },
+    { icon: 'leaf', label: 'Growth', value: mainPlant?.growthRate, tone: 'good' },
+    { icon: 'mappin', label: 'Placement', value: mainPlant?.placement },
+    { icon: 'thermometer', label: 'Temperature', value: mainPlant?.bestTempC ? `${mainPlant.bestTempC}°C`.replace('°C°C', '°C') : null },
+    { icon: 'drop.fill', label: 'pH range', value: mainPlant?.phRange },
+    { icon: 'water.waves', label: 'Tank', value: mainPlant?.tankName },
+  ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={{ marginHorizontal: 0 }}>
-          <MainFishDisplay
-            image={mainPlant?.image ? { uri: mainPlant.image } : undefined}
-            title={mainPlant?.name ?? 'Plant'}
-            preferredTempC={mainPlant?.bestTempC}
-            tankName={mainPlant?.tankName}
-            phLevel={mainPlant?.phRange}
-            feeding={mainPlant?.light ? `Light: ${mainPlant.light}` : undefined}
-          />
-        </View>
-
+        <SpeciesHero
+          image={mainPlant?.image ? { uri: mainPlant.image } : null}
+          title={mainPlant?.name ?? (loading ? 'Loading…' : 'Plant')}
+          subtitle={mainPlant?.scientificName}
+          chips={mainPlant?.growthRate ? [{ label: `${mainPlant.growthRate} growth`, tone: 'good' }] : []}
+        />
         <View style={styles.paddedContent}>
-            <SpeciesOverview title="Species details" description={mainPlant?.description || (loading ? 'Loading plant information.' : 'Plant data is unavailable.')} />
-
-          {loading ? <ActivityIndicator color="#FFFFFF" /> : null}
-          {careItems.length ? <CareCards cards={careItems} /> : null}
+          {loading ? <ActivityIndicator color={Palette.primaryBright} style={{ marginTop: 24 }} /> : null}
+          {mainPlant ? (
+            <>
+              <Section title="Plant care" icon="leaf">
+                <SpecGrid items={specs} />
+              </Section>
+              <Section title="Overview" icon="info.circle">
+                <Text style={styles.paragraph}>{mainPlant.description || 'No description yet for this plant.'}</Text>
+              </Section>
+            </>
+          ) : !loading ? <Text style={[styles.paragraph, { marginTop: 24 }]}>We could not find this plant.</Text> : null}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#090A0F',
-  },
-  content: {
-    paddingBottom: 40,
-  },
-  paddedContent: {
-    paddingHorizontal: 20,
-  },
+  container: { flex: 1, backgroundColor: Palette.background },
+  content: { paddingBottom: 48 },
+  paddedContent: { paddingHorizontal: 20 },
+  paragraph: { color: Palette.textMuted, fontSize: 15, lineHeight: 23 },
 });

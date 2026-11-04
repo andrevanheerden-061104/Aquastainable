@@ -13,7 +13,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Palette } from '@/constants/palette';
 import { auth } from '@/firebase';
 
-import { useAuthApi } from './hooks/useAuthApi';
+import { useAuthApi } from '@/lib/hooks/useAuthApi';
 
 const LENGTH = 6;
 

@@ -1,8 +1,8 @@
 import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Colors } from '../../app/colors';
-import { ThemeType } from '../../app/theme';
+import { Colors } from '@/lib/colors';
+import { ThemeType } from '@/lib/theme';
 
 interface PillItem {
   id: string;

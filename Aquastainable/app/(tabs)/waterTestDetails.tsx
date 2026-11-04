@@ -1,15 +1,19 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View, Image, Dimensions } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 
-import WaterTestSummaryCard from '../../components/waterTest/WaterTestSummaryCard';
+import Section from '@/components/kit/Section';
+import SpecGrid, { SpecItem } from '@/components/kit/SpecGrid';
+import SpeciesHero from '@/components/kit/SpeciesHero';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Palette, qualityTone } from '@/constants/palette';
 import AddWaterTestModal from '../../components/waterTest/AddWaterTestModal';
 import HoldToOpenButton from '../../components/waterTest/HoldToOpenButton';
 import { auth } from '@/firebase';
-import { useTankApi } from '../hooks/useTankApi';
-import useWaterTestApi, { WaterTestRecord } from '../hooks/useWaterTestApi';
+import { useTankApi } from '@/lib/hooks/useTankApi';
+import useWaterTestApi, { WaterTestRecord } from '@/lib/hooks/useWaterTestApi';
 
 export default function WaterTestDetailsScreen() {
   const { tankId } = useLocalSearchParams<{ tankId?: string }>();
@@ -67,7 +71,7 @@ export default function WaterTestDetailsScreen() {
   }, [loadWaterTestData]));
 
   if (loading) {
-    return <SafeAreaView style={styles.container}><ActivityIndicator color="#FFFFFF" /></SafeAreaView>;
+    return <SafeAreaView style={[styles.container, { justifyContent: 'center' }]}><ActivityIndicator color={Palette.primaryBright} /></SafeAreaView>;
   }
 
   if (!tank) {
@@ -86,7 +90,7 @@ export default function WaterTestDetailsScreen() {
     nitritePpm: latestTest.readings?.nitritePpm ?? '~',
   } : tank.conditions;
   const hasTestDate = typeof conditions.lastTestedDaysAgo === 'number';
-  const nextTestDue = hasTestDate ? (conditions.lastTestedDaysAgo >= 7 ? 'Due now' : `${7 - conditions.lastTestedDaysAgo} days`) : '~';
+  const nextTestDue = hasTestDate ? (conditions.lastTestedDaysAgo >= 7 ? 'Due now' : `${7 - conditions.lastTestedDaysAgo} day${7 - conditions.lastTestedDaysAgo === 1 ? "" : "s"}`) : '~';
   const testDate = hasTestDate ? `${conditions.lastTestedDaysAgo} days ago` : '~';
   const hasTestData = conditions.ph !== '~' || conditions.ammoniaPpm !== '~' || conditions.nitritePpm !== '~';
   const history = waterTests.map((test, index) => ({
@@ -101,198 +105,109 @@ export default function WaterTestDetailsScreen() {
     ],
   }));
 
-  const screenWidth = Dimensions.get('window').width;
+  const quality = qualityTone(conditions.waterQuality === '~' ? '' : conditions.waterQuality);
+  const chipTone = quality.level === 'excellent' ? 'good' : quality.level === 'attention' ? 'bad' : quality.level === 'fair' ? 'warn' : 'default';
+  const num = (value: unknown) => { const n = parseFloat(String(value)); return Number.isFinite(n) ? n : null; };
+  const toxinTone = (value: unknown): SpecItem['tone'] => { const n = num(value); return n === null ? 'default' : n === 0 ? 'good' : n <= 0.25 ? 'warn' : 'bad'; };
+  const phTone = (value: unknown): SpecItem['tone'] => { const n = num(value); return n === null ? 'default' : n >= 6.5 && n <= 8 ? 'good' : 'warn'; };
+  const withUnit = (value: unknown, unit: string) => (value === '~' || value === '' || value === undefined || value === null ? '—' : `${value}${unit}`);
+  const readings: SpecItem[] = [
+    { icon: 'water.waves', label: 'pH', value: withUnit(conditions.ph, ''), tone: phTone(conditions.ph) },
+    { icon: 'thermometer', label: 'Temperature', value: withUnit(conditions.preferredTempC, '°C') },
+    { icon: 'testtube.2', label: 'Ammonia', value: withUnit(conditions.ammoniaPpm, ' ppm'), tone: toxinTone(conditions.ammoniaPpm) },
+    { icon: 'testtube.2', label: 'Nitrite', value: withUnit(conditions.nitritePpm, ' ppm'), tone: toxinTone(conditions.nitritePpm) },
+    { icon: 'calendar', label: 'Tested', value: hasTestDate ? (conditions.lastTestedDaysAgo === 0 ? 'Today' : testDate) : '—' },
+    { icon: 'hourglass', label: 'Next test', value: nextTestDue === '~' ? '—' : nextTestDue, tone: nextTestDue === 'Due now' ? 'warn' : 'default' },
+  ];
+  const summary = latestTest?.summary || (quality.level === 'unknown'
+    ? 'No water test yet. Hold the button below to add your first one.'
+    : quality.level === 'excellent'
+    ? 'The water is balanced and healthy. Keep up your routine.'
+    : 'The tank may need attention soon. Watch ammonia and nitrite and do an early water change.');
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {tank.tankImg ? <Image source={{ uri: tank.tankImg }} style={styles.heroImage} resizeMode="cover" /> : <View style={styles.heroImageEmpty} />}
+        <SpeciesHero
+          image={tank.tankImg ? { uri: tank.tankImg } : null}
+          title={`Water test`}
+          subtitle={`${tank.tankName} · ${hasTestDate ? `last tested ${conditions.lastTestedDaysAgo === 0 ? 'today' : testDate}` : 'not tested yet'}`}
+          chips={[{ label: quality.label, tone: chipTone }]}
+          height={320}
+          onBack={() => router.back()}
+        />
 
-        <View style={styles.headerBlock}>
-          <View style={styles.titleRow}>
-            <Text style={styles.title}>Water Test</Text>
-            <View style={[styles.statusPill, conditions.waterQuality === 'Excellent' ? styles.statusExcellent : styles.statusNeedsAttention]}>
-              <Text style={styles.statusText}>{conditions.waterQuality}</Text>
+        <View style={styles.body}>
+          <View style={[styles.summaryCard, { borderColor: quality.level === 'unknown' ? Palette.border : quality.color + '55', backgroundColor: quality.soft }]}>
+            <View style={styles.summaryHead}>
+              <IconSymbol name="sparkles" size={16} color={quality.color} />
+              <Text style={[styles.summaryEyebrow, { color: quality.color }]}>AI SUMMARY</Text>
             </View>
+            <Text style={styles.summaryText}>{summary}</Text>
+            {latestTest?.nextWaterChange ? (
+              <View style={styles.nextRow}>
+                <IconSymbol name="arrow.triangle.2.circlepath" size={14} color={Palette.textMuted} />
+                <Text style={styles.nextChange}>Next water change: {latestTest.nextWaterChange}</Text>
+              </View>
+            ) : null}
           </View>
-          <Text style={styles.subtitle}>Last tested {testDate}</Text>
-          <Text style={styles.tankName}>Tank: {tank.tankName}</Text>
-        </View>
 
-        <View style={styles.summaryBox}>
-          <Text style={styles.summaryTitle}>AI summary</Text>
-          <Text style={styles.summaryText}>
-            {latestTest?.summary || (conditions.waterQuality === '~'
-              ? 'No water test data yet. Add a test to see water-quality insights.'
-              : conditions.waterQuality === 'Excellent'
-              ? 'The water chemistry looks balanced and the tank is in a healthy state for ongoing maintenance.'
-              : 'The tank may need attention soon. Keep an eye on ammonia and nitrite levels and consider an early water change.')}
-          </Text>
-          {latestTest?.nextWaterChange ? <Text style={styles.nextChange}>Next change: {latestTest.nextWaterChange}</Text> : null}
-        </View>
+          <HoldToOpenButton onHold={() => setAddTestVisible(true)} />
 
-        <HoldToOpenButton onHold={() => setAddTestVisible(true)} />
+          <Section title="Readings" icon="chart.bar" hint={hasTestData ? 'Latest test' : undefined}>
+            <SpecGrid items={readings} columns={2} />
+          </Section>
 
-        <View style={styles.dataCard}>
-          <Text style={styles.dataTitle}>Latest test data</Text>
-          <View style={styles.dataRow}><Text style={styles.dataLabel}>pH</Text><Text style={styles.dataValue}>{conditions.ph || '~'}</Text></View>
-          <View style={styles.dataRow}><Text style={styles.dataLabel}>Temp</Text><Text style={styles.dataValue}>{conditions.preferredTempC || '~'}</Text></View>
-          <View style={styles.dataRow}><Text style={styles.dataLabel}>Ammonia</Text><Text style={styles.dataValue}>{conditions.ammoniaPpm ?? '~'}</Text></View>
-          <View style={styles.dataRow}><Text style={styles.dataLabel}>Nitrite</Text><Text style={styles.dataValue}>{conditions.nitritePpm ?? '~'}</Text></View>
-        </View>
-
-        <View style={styles.carouselSection}>
-          <Text style={styles.carouselTitle}>Past tests</Text>
-          <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.carouselContent}
-          >
-            {history.length > 0 ? history.map((item) => (
-              <WaterTestSummaryCard
-                key={`${item.title}-${item.date}`}
-                title={item.title}
-                date={item.date}
-                summary={item.summary}
-                data={item.data}
-                style={{ width: screenWidth - 40 }}
-              />
-            )) : <Text style={styles.emptyText}>No past water tests yet.</Text>}
-          </ScrollView>
+          <Section title="Past tests" icon="calendar" hint={history.length ? `${history.length} saved` : undefined}>
+            {history.length > 0 ? (
+              <View style={styles.historyList}>
+                {waterTests.map((test, index) => {
+                  const tone = qualityTone(test.waterQuality);
+                  return (
+                    <View key={test.id || `${test.testedAt}-${index}`} style={styles.historyRow}>
+                      <View style={[styles.historyDot, { backgroundColor: tone.color }]} />
+                      <View style={styles.historyMain}>
+                        <View style={styles.historyTop}>
+                          <Text style={styles.historyTitle}>{index === 0 ? 'Latest test' : new Date(test.testedAt).toLocaleDateString()}</Text>
+                          <Text style={[styles.historyBadge, { color: tone.color, backgroundColor: tone.soft }]}>{tone.label}</Text>
+                        </View>
+                        <Text style={styles.historyMeta}>
+                          pH {test.readings?.ph || '—'} · NH₃ {test.readings?.ammoniaPpm ?? '—'} · NO₂ {test.readings?.nitritePpm ?? '—'}
+                        </Text>
+                        {test.summary ? <Text style={styles.historySummary} numberOfLines={2}>{test.summary}</Text> : null}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : <Text style={styles.emptyInline}>No past water tests yet.</Text>}
+          </Section>
         </View>
       </ScrollView>
       {currentUserId ? <AddWaterTestModal visible={addTestVisible} tankId={tank.tankId} userId={currentUserId} onClose={() => setAddTestVisible(false)} onSaved={() => { setAddTestVisible(false); getTankWaterTests(tank.tankId).then((tests) => { const sortedTests = [...tests].sort((left, right) => new Date(right.testedAt).getTime() - new Date(left.testedAt).getTime()); setWaterTests(sortedTests); setLatestTest(sortedTests[0] || null); }).catch(() => undefined); }} /> : null}
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#090A0F',
-  },
-  emptyText: {
-    color: '#8F97A6',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 24,
-  },
-  content: {
-    paddingBottom: 40,
-  },
-  heroImage: {
-    width: '100%',
-    height: 220,
-  },
-  heroImageEmpty: {
-    width: '100%',
-    height: 220,
-    backgroundColor: '#20232C',
-  },
-  headerBlock: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  title: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
-  },
-  subtitle: {
-    color: '#8F97A6',
-    fontSize: 14,
-    marginTop: 6,
-  },
-  tankName: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    marginTop: 8,
-  },
-  statusPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  statusExcellent: {
-    backgroundColor: '#0F4D2D',
-  },
-  statusNeedsAttention: {
-    backgroundColor: '#5A2A28',
-  },
-  statusText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  summaryBox: {
-    marginHorizontal: 20,
-    marginTop: 20,
-    backgroundColor: '#14151B',
-    borderRadius: 20,
-    padding: 18,
-  },
-  summaryTitle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  summaryText: {
-    color: '#8F97A6',
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  nextChange: {
-    color: '#D0D7E4',
-    fontSize: 13,
-    lineHeight: 19,
-    marginTop: 12,
-  },
-  dataCard: {
-    marginHorizontal: 20,
-    marginTop: 16,
-    backgroundColor: '#14151B',
-    borderRadius: 20,
-    padding: 18,
-  },
-  dataTitle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 10,
-  },
-  dataRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  dataLabel: {
-    color: '#6E6E73',
-    fontSize: 13,
-  },
-  dataValue: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  carouselSection: {
-    marginTop: 20,
-    paddingLeft: 20,
-  },
-  carouselTitle: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  carouselContent: {
-    paddingRight: 20,
-    paddingBottom: 8,
-  },
+  container: { flex: 1, backgroundColor: Palette.background },
+  emptyText: { color: Palette.textMuted, fontSize: 14, textAlign: 'center', marginTop: 80 },
+  content: { paddingBottom: 48 },
+  body: { paddingHorizontal: 20, gap: 20, marginTop: 4 },
+  summaryCard: { borderRadius: 22, borderWidth: 1, padding: 18, gap: 10 },
+  summaryHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  summaryEyebrow: { fontSize: 12, fontWeight: '800', letterSpacing: 1.2 },
+  summaryText: { color: Palette.text, fontSize: 15, lineHeight: 23 },
+  nextRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 10, borderTopWidth: 1, borderTopColor: Palette.border },
+  nextChange: { color: Palette.textMuted, fontSize: 13 },
+  historyList: { gap: 10 },
+  historyRow: { flexDirection: 'row', gap: 12, backgroundColor: Palette.surface, borderRadius: 18, borderWidth: 1, borderColor: Palette.border, padding: 14 },
+  historyDot: { width: 8, height: 8, borderRadius: 4, marginTop: 7 },
+  historyMain: { flex: 1, gap: 4 },
+  historyTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
+  historyTitle: { color: Palette.text, fontSize: 15, fontWeight: '700' },
+  historyBadge: { fontSize: 11, fontWeight: '800', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, overflow: 'hidden' },
+  historyMeta: { color: Palette.textMuted, fontSize: 13 },
+  historySummary: { color: Palette.textFaint, fontSize: 13, lineHeight: 19 },
+  emptyInline: { color: Palette.textFaint, fontSize: 14 },
 });

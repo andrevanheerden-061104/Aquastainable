@@ -31,8 +31,8 @@ export function HoldIconButton({ onHold, icon, label, fillColor = 'rgba(46, 140,
       activeOpacity={0.75}
       accessibilityLabel={label}
     >
-      <AnimatedView style={[styles.holdFill, { backgroundColor: fillColor, transform: [{ scaleX: progress }] }]} pointerEvents="none" />
-      <View style={styles.iconContent} pointerEvents="none">
+      <AnimatedView style={[styles.holdFill, { backgroundColor: fillColor, transform: [{ scaleX: progress }] }, { pointerEvents: 'none' }]} />
+      <View style={[styles.iconContent, { pointerEvents: 'none' }]}>
         <Feather name={icon} size={20} color={iconColor} />
       </View>
     </TouchableOpacity>
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   holdFill: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(46, 140, 166, 0.75)',
     transformOrigin: 'left',
   },

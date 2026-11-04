@@ -19,8 +19,8 @@ import WaterChangeToast from '@/components/WaterChangeToast';
 import { Palette, qualityTone } from '@/constants/palette';
 import { auth } from '@/firebase';
 
-import { useTankApi } from '../hooks/useTankApi';
-import useWaterTestApi from '../hooks/useWaterTestApi';
+import { useTankApi } from '@/lib/hooks/useTankApi';
+import useWaterTestApi from '@/lib/hooks/useWaterTestApi';
 
 const SIZE_PRESETS = ['20', '50', '100', '200'];
 
@@ -36,11 +36,11 @@ const lastTestLabel = (days: number | null) => {
   return `${days}d ago`;
 };
 
-// First useful sentence of the AI overview, so the dashboard shows one clear tip.
+// The AI overview is 1-2 short sentences; show it as the tank's quick verdict.
 const firstTip = (overview?: string) => {
   if (!overview) return '';
-  const firstLine = overview.split('\n').map((line) => line.replace(/^[-*•\s]+/, '').trim()).find(Boolean) || '';
-  return firstLine.length > 140 ? `${firstLine.slice(0, 137)}…` : firstLine;
+  const text = overview.replace(/^[-*•#\s]+/gm, '').replace(/\s+/g, ' ').trim();
+  return text.length > 220 ? `${text.slice(0, 217)}…` : text;
 };
 
 export default function HomeScreen() {
@@ -121,7 +121,7 @@ export default function HomeScreen() {
   const handlePickTankImage = async (source: 'library' | 'camera') => {
     try {
       const pickerResult = source === 'library'
-        ? await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, quality: 0.8, base64: true })
+        ? await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 0.8, base64: true })
         : await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 0.8, base64: true });
       if (pickerResult.canceled || !pickerResult.assets?.[0]) return;
       const asset = pickerResult.assets[0];
@@ -227,7 +227,7 @@ export default function HomeScreen() {
                 {tip ? (
                   <View style={styles.tip}>
                     <IconSymbol name="sparkles" size={16} color={Palette.accent} />
-                    <Text style={styles.tipText} numberOfLines={2}>{tip}</Text>
+                    <Text style={styles.tipText} numberOfLines={4}>{tip}</Text>
                   </View>
                 ) : null}
 

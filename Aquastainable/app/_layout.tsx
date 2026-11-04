@@ -6,7 +6,7 @@ import { Platform, Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { installAuthHeader } from './hooks/authHeader';
+import { installAuthHeader } from '@/lib/hooks/authHeader';
 import { useFonts, Montserrat_400Regular, Montserrat_600SemiBold, Montserrat_700Bold } from '@expo-google-fonts/montserrat';
 
 if (process.env.EXPO_PUBLIC_DEMO === '1') {

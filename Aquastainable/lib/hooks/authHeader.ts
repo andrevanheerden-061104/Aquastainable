@@ -4,7 +4,7 @@ import axios from 'axios';
 
 import { auth } from '@/firebase';
 
-import { API_BASE_URL } from './useBackendApi';
+import { API_BASE_URL } from '@/lib/hooks/useBackendApi';
 
 let installed = false;
 

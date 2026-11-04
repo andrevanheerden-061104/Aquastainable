@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, View, Text, Image, ImageSourcePropType, Animated, Easing } from 'react-native';
+import { StyleSheet, View, Text, Image, ImageSourcePropType, Animated, Easing, Platform } from 'react-native';
 
 interface HeroSectionProps {
   logoSource?: ImageSourcePropType | null;
@@ -18,13 +18,13 @@ export default function HeroSection({ logoSource }: HeroSectionProps) {
             duration: 1800,
             delay,
             easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
+            useNativeDriver: Platform.OS !== 'web',
           }),
           Animated.timing(anim, {
             toValue: 0.96,
             duration: 1800,
             easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
+            useNativeDriver: Platform.OS !== 'web',
           }),
         ])
       ).start();

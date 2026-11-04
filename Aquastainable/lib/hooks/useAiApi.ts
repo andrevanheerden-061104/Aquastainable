@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import axios from 'axios';
 
-import { useBackendApi } from './useBackendApi';
+import { useBackendApi } from '@/lib/hooks/useBackendApi';
 
 export type AiChatMessage = {
   id?: string;

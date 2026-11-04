@@ -71,15 +71,15 @@ export default function SwipeToConfirm({ label, onConfirm, disabled = false, loa
       accessibilityActions={[{ name: 'activate' }]}
       onAccessibilityAction={(event) => { if (event.nativeEvent.actionName === 'activate' && !disabled && !loading) confirm(); }}
     >
-      <Animated.View pointerEvents="none" style={[styles.fill, fillStyle]} />
-      <Animated.Text pointerEvents="none" style={[styles.label, labelStyle]}>{loading ? 'One moment…' : label}</Animated.Text>
+      <Animated.View style={[styles.fill, fillStyle, { pointerEvents: 'none' }]} />
+      <Animated.Text style={[styles.label, labelStyle, { pointerEvents: 'none' }]}>{loading ? 'One moment…' : label}</Animated.Text>
       <GestureDetector gesture={pan}>
         <Animated.View style={[styles.thumb, thumbStyle]} hitSlop={12}>
           {loading ? <ActivityIndicator color="#fff" /> : <IconSymbol name="chevron.right" size={26} color="#FFFFFF" />}
         </Animated.View>
       </GestureDetector>
       {trackWidth > 280 && label.length <= 18 ? (
-        <View pointerEvents="none" style={styles.hintArrows}>
+        <View style={[styles.hintArrows, { pointerEvents: 'none' }]}>
           <Text style={styles.hintText}>›››</Text>
         </View>
       ) : null}
@@ -95,9 +95,7 @@ const styles = StyleSheet.create({
   fill: { position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: 999, backgroundColor: 'rgba(79,179,204,0.28)' },
   label: { position: 'absolute', left: THUMB + PAD * 2, right: 26, textAlign: 'center', color: Palette.text, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: 'Montserrat_700Bold' },
   thumb: {
-    width: THUMB, height: THUMB, borderRadius: THUMB / 2, backgroundColor: Palette.primary, alignItems: 'center', justifyContent: 'center',
-    shadowColor: Palette.primary, shadowOpacity: 0.5, shadowRadius: 10, shadowOffset: { width: 0, height: 2 }, elevation: 4,
-  },
+    width: THUMB, height: THUMB, borderRadius: THUMB / 2, backgroundColor: Palette.primary, alignItems: 'center', justifyContent: 'center', boxShadow: '0px 2px 10px rgba(46, 140, 166, 0.5)' },
   hintArrows: { position: 'absolute', right: 18 },
   hintText: { color: 'rgba(255,255,255,0.35)', fontSize: 18, letterSpacing: 2 },
 });

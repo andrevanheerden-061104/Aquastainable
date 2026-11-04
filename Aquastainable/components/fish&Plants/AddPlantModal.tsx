@@ -5,8 +5,8 @@ import * as ImagePicker from 'expo-image-picker';
 import SwipeCheckButton from './SwipeCheckButton';
 import CompatibilityResultModal from './CompatibilityResultModal';
 import { auth } from '../../firebase';
-import { useTankApi, TankRecord } from '../../app/hooks/useTankApi';
-import { PlantSpecies, usePlantApi } from '../../app/hooks/usePlantApi';
+import { useTankApi, TankRecord } from '@/lib/hooks/useTankApi';
+import { PlantSpecies, usePlantApi } from '@/lib/hooks/usePlantApi';
 
 type Props = {
   visible: boolean;
@@ -198,7 +198,7 @@ export default function AddPlantModal({ visible, onClose }: Props) {
                 style={styles.input}
               />
               <Text style={styles.helperText}>Search freshwater aquarium plants and choose a result.</Text>
-              {searchLoading ? <ActivityIndicator color="#5B8CFF" /> : null}
+              {searchLoading ? <ActivityIndicator color="#4FB3CC" /> : null}
               {plantSuggestions.length ? (
                 <ScrollView style={styles.suggestionsList} nestedScrollEnabled showsVerticalScrollIndicator>
                   {plantSuggestions.slice(0, 5).map((plant) => (
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backdropTouchable: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   modalCard: {
     marginHorizontal: 18,
@@ -392,8 +392,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#14151B',
   },
   tankOptionActive: {
-    borderColor: '#5B8CFF',
-    backgroundColor: '#18234F',
+    borderColor: '#4FB3CC',
+    backgroundColor: 'rgba(46,140,166,0.18)',
   },
   tankLabel: {
     color: '#CED5E3',
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   actionButton: {
-    backgroundColor: '#5B8CFF',
+    backgroundColor: '#4FB3CC',
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',

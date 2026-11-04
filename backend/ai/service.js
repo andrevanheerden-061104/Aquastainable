@@ -53,7 +53,7 @@ function tidyAnswer(text) {
   let run = 0;
   for (const line of lines) {
     run = line.startsWith('- ') ? run + 1 : 0;
-    if (run <= 4) out.push(line);
+    if (run <= 5) out.push(line);
   }
   return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
@@ -64,7 +64,7 @@ async function answerAssistant(message, context, history = []) {
     system: FISH_ASSISTANT_PROMPT,
     // Short history keeps answers focused and cheaper.
     history: history.slice(-8),
-    maxTokens: 1200,
+    maxTokens: 1500,
     temperature: 0.3,
     reasoningEffort: 'low',
   });
@@ -78,7 +78,7 @@ async function generateTankOverview(data) {
     system: AQUARIUM_SYSTEM_PROMPT,
   });
 
-  const overview = result.response.trim().split(/\s+/).slice(0, 150).join(' ');
+  const overview = result.response.trim().replace(/^[-*#\s]+/gm, '').split(/\s+/).slice(0, 60).join(' ');
   return { overview, model: result.model };
 }
 

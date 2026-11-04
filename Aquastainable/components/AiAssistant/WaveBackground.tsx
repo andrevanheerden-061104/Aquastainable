@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Colors } from '../../app/colors';
-import { ThemeType, ThemeColors } from '../../app/theme';
+import { Colors } from '@/lib/colors';
+import { ThemeType, ThemeColors } from '@/lib/theme';
 
 interface WaveBackgroundProps {
   theme?: ThemeType;
@@ -71,6 +71,6 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '25deg' }],
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
 });

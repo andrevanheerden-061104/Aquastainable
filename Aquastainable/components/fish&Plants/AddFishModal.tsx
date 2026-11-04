@@ -3,10 +3,10 @@ import { ActivityIndicator, Alert, Image, Modal, ScrollView, StyleSheet, Text, T
 import { onAuthStateChanged } from 'firebase/auth';
 import SwipeCheckButton from './SwipeCheckButton';
 import CompatibilityResultModal from './CompatibilityResultModal';
-import { useFishApi, FishSpecies } from '../../app/hooks/useFishApi';
-import { FishCompatibilityAssessment } from '../../app/hooks/useFishApi';
+import { useFishApi, FishSpecies } from '@/lib/hooks/useFishApi';
+import { FishCompatibilityAssessment } from '@/lib/hooks/useFishApi';
 import { auth } from '@/firebase';
-import { useTankApi, TankRecord } from '../../app/hooks/useTankApi';
+import { useTankApi, TankRecord } from '@/lib/hooks/useTankApi';
 
 type Props = {
   visible: boolean;
@@ -256,7 +256,7 @@ export default function AddFishModal({ visible, onClose, tankId: defaultTankId }
               <Text style={styles.helperText}>Start typing to search freshwater aquarium fish species.</Text>
               {searchLoading ? (
                 <View style={styles.searchLoadingRow}>
-                  <ActivityIndicator size="small" color="#5B8CFF" />
+                  <ActivityIndicator size="small" color="#4FB3CC" />
                   <Text style={styles.searchLoadingText}>Searching fish species...</Text>
                 </View>
               ) : null}
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backdropTouchable: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   modalCard: {
     marginHorizontal: 18,
@@ -470,8 +470,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#14151B',
   },
   tankOptionActive: {
-    borderColor: '#5B8CFF',
-    backgroundColor: '#18234F',
+    borderColor: '#4FB3CC',
+    backgroundColor: 'rgba(46,140,166,0.18)',
   },
   tankLabel: {
     color: '#CED5E3',
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   actionButton: {
-    backgroundColor: '#5B8CFF',
+    backgroundColor: '#4FB3CC',
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   imageLoadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(12, 15, 23, 0.58)',

@@ -37,7 +37,7 @@ Return only the requested format.`;
 
 // Chat assistant only (the Fish Assistant screen). Structured tasks below keep using
 // AQUARIUM_SYSTEM_PROMPT.
-const FISH_ASSISTANT_PROMPT = `You are the Fish Assistant inside the Aquastainable app. You help beginner fishkeepers look after their freshwater fish.
+const FISH_ASSISTANT_PROMPT = `You are the Fish Assistant inside the Aquastainable app. You help beginner fishkeepers look after their freshwater fish. Answer like a friendly, knowledgeable fish expert talking to a friend: warm, clear and to the point.
 
 WHAT YOU ANSWER
 - Only questions about fish: fish health and sickness, behaviour, species, feeding, breeding, tank mates, stocking, and the tank or water only as it affects the fish (temperature, pH, ammonia, nitrite, nitrate, water changes, filters, plants as fish habitat).
@@ -45,34 +45,24 @@ WHAT YOU ANSWER
 I can only help with fish. Ask me about your fish's health, feeding, tank mates or water.
 - Never help anyone harm an animal.
 
-HOW TO ANSWER (always this shape, always short)
-**<the direct answer in one short sentence, max 12 words>**
-<one sentence saying why, in plain words>
-
-**Do this**
-- <step 1, max 12 words>
-- <step 2, max 12 words>
-- <step 3, optional>
-
-**Watch for**
-- <optional: one warning sign that means things are getting worse>
-
-Rules for the shape:
-- Whole answer under 90 words. Use the simplest words a 12-year-old understands. No jargon; if you must use a word like "ammonia", say what it does.
-- Only use **bold** for the first line and the two section labels. Only use "- " bullets. No headings with #, no tables, no numbered lists, no emojis, no disclaimers.
-- Skip "Watch for" unless it is about sickness, danger, or a new fish.
-- For a simple fact question (e.g. "how big do guppies get?") use only the first two lines, no sections.
-- If it is an emergency (gasping at the surface, ammonia or nitrite above 0, fish dying, chlorine), start the first line with "Act now:" and put the single most important action first.
-- If you really need one detail to answer safely (tank size, which fish), give your best short answer first, then ask one short question on the last line.
-- Use the user's own tank and fish from the context when it helps (say their tank or fish name). Never invent readings, fish or tests they do not have.
+HOW TO WRITE THE ANSWER
+- Start with a short paragraph (2-4 sentences) that answers the question directly and explains it in plain words.
+- If there are things to do, follow with a few bullet points ("- ") that are short and practical.
+- For a sick fish, cover: what it most likely is and why it happens (the paragraph), then **How to treat it** as 3-5 bullets, then one line starting "See a vet or fish shop if" with the warning signs.
+- For a simple fact question (e.g. "how big do guppies get?"), 1-3 sentences is enough, no bullets.
+- You may use a short bold label on its own line before a list (e.g. **What to do**) and **bold** for the one key term. No headings with #, no tables, no numbered lists, no emojis.
+- Keep it under about 150 words. Use the simplest words a 12-year-old understands; if you must use a word like "ammonia", say what it does.
+- Emergencies (gasping at the surface, ammonia or nitrite above 0, fish dying, chlorine): say so in the first sentence and put the single most important action first.
+- If you really need one detail to answer safely (tank size, which fish), give your best short answer first, then ask one short question at the end.
+- Use the user's own tank and fish from the context when it helps (mention them by name). Never invent readings, fish or tests they do not have.
 
 SAFETY
 - Animal welfare comes first. Never recommend incompatible fish, overstocking, or adding fish while ammonia or nitrite is above 0.
 - Tap water always needs water conditioner. Change water gradually (10-30%), never all at once. No sudden temperature or pH changes.
-- Do not name medicine doses. Say "follow the label" and suggest a fish shop or aquatic vet for serious illness.
+- Do not give medicine doses. Say "follow the label" and suggest a fish shop or aquatic vet for serious illness.
 - If unsure, say so briefly. Never invent facts.
 
-Do not return images, image links, HTML or file attachments. Plain text in the shape above only.`;
+Do not return images, image links, HTML or file attachments. Plain text only.`;
 
 function fishDataPrompt(species) {
   return `Create a freshwater aquarium fish profile for: ${species}
@@ -131,11 +121,11 @@ function assistantPrompt(message, context = {}) {
 The user's aquarium (use it if it helps, never invent more):
 ${JSON.stringify(slim)}
 
-Answer in the exact short shape from your instructions.${slim.hasPhoto ? ' The user attached a photo you cannot see; say what to look for instead of guessing.' : ''}`;
+Answer in the style from your instructions: a short paragraph first, then bullets only if there are steps.${slim.hasPhoto ? ' The user attached a photo you cannot see; say what to look for instead of guessing.' : ''}`;
 }
 
 function tankOverviewPrompt({ tank, fish, plants, waterTests }) {
-  return `Write a simple overview for this freshwater aquarium using every piece of supplied data.
+  return `Give a quick overview of this freshwater aquarium, the way a friendly fish expert would sum it up after glancing at it.
 
 Tank data:
 ${JSON.stringify(tank, null, 2)}
@@ -150,15 +140,12 @@ Water tests linked to this tank:
 ${JSON.stringify(waterTests, null, 2)}
 
 Rules:
-- Maximum 150 words. Aim for 80-120 words.
-- Write one clear paragraph, not a title, bullet list, or JSON.
-- Mention the tank's name and size when available.
-- Summarize the current fish, plants, and latest water-test condition when those records exist.
-- If only basic tank data exists, say that the tank is ready to be developed and suggest a few suitable freshwater fish options based on the tank size. Do not invent existing fish, plants, or test results.
-- Suggest fish only when tank size and water conditions make them reasonably appropriate. Mention schooling, adult size, compatibility, and required groups where relevant.
-- Include one or two practical improvements, prioritizing water testing, cycling, filtration, plants, or stocking.
-- Never recommend incompatible fish, overstocking, or adding fish while ammonia or nitrite is detectable. If a dangerous test is present, lead with STOP and the immediate safe action.
-- Clearly say when more information is needed instead of guessing.`;
+- Write 1 or 2 sentences only (maximum 45 words). Plain text, no title, list, bullets or JSON.
+- Mention the tank by name. Say what is going well, or what is wrong if something is wrong.
+- If something is wrong (e.g. ammonia or nitrite above 0, overstocking, incompatible fish, no recent test), name the problem and the one most important fix.
+- If nothing is wrong, say what is really good about the tank.
+- If the tank has no fish, plants or tests yet, say it is ready to set up and suggest one easy first step.
+- Use simple words. Never invent fish, plants or test results that are not in the data.`;
 }
 
 function fishCompatibilityPrompt({ fish, schoolSize, selectedTank, otherTanks }) {

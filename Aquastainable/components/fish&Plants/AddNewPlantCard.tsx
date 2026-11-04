@@ -17,7 +17,7 @@ export default function AddNewPlantCard({ onPress }: { onPress?: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  card: { width: '48%', minHeight: 190, borderRadius: 22, marginBottom: 12, borderWidth: 1.5, borderStyle: 'dashed', borderColor: Palette.primaryBorder, backgroundColor: Palette.surface },
+  card: { flex: 1, maxWidth: '50%', minHeight: 256, borderRadius: 24, borderWidth: 1.5, borderStyle: 'dashed', borderColor: Palette.primaryBorder, backgroundColor: Palette.surface },
   content: { flexDirection: 'column', gap: 8 },
   icon: { width: 56, height: 56, borderRadius: 28, backgroundColor: Palette.primarySoft, alignItems: 'center', justifyContent: 'center' },
   label: { color: Palette.text, fontSize: 15, fontFamily: 'Montserrat_600SemiBold' },

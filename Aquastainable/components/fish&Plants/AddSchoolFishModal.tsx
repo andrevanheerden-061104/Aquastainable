@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   backdropTouchable: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   modalCard: {
     maxHeight: '88%',
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   toggleOptionActive: {
-    backgroundColor: '#5B8CFF',
+    backgroundColor: '#4FB3CC',
   },
   toggleText: {
     color: '#8F97A6',
@@ -337,12 +337,12 @@ const styles = StyleSheet.create({
     position: 'relative',
     alignItems: 'center',
     borderRadius: 14,
-    backgroundColor: '#5B8CFF',
+    backgroundColor: '#4FB3CC',
     paddingVertical: 14,
     marginTop: 4,
   },
   saveFill: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#2563EB',
   },
   saveText: {

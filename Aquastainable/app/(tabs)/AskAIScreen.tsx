@@ -16,10 +16,10 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Palette } from '@/constants/palette';
 import { auth } from '@/firebase';
 
-import useAiApi, { AiChat, AiChatMessage } from '../hooks/useAiApi';
-import { useFishApi } from '../hooks/useFishApi';
-import { usePlantApi } from '../hooks/usePlantApi';
-import { useTankApi } from '../hooks/useTankApi';
+import useAiApi, { AiChat, AiChatMessage } from '@/lib/hooks/useAiApi';
+import { useFishApi } from '@/lib/hooks/useFishApi';
+import { usePlantApi } from '@/lib/hooks/usePlantApi';
+import { useTankApi } from '@/lib/hooks/useTankApi';
 
 type TopicId = 'sick' | 'feeding' | 'tankmates' | 'water';
 

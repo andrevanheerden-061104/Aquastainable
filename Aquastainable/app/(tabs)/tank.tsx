@@ -1,23 +1,24 @@
 // app/(tabs)/tank.tsx
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, FlatList, Image, Alert, Modal, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, TextInput, View } from 'react-native';
+import { Animated, Dimensions, FlatList, Image, Alert, Modal, NativeScrollEvent, NativeSyntheticEvent, Pressable, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 import * as ImagePicker from 'expo-image-picker';
 
-import HeaderRow from '@/components/tank/HeaderRow';
 import HoldAction from '@/components/gestures/HoldAction';
-import OverviewSection from '@/components/tank/OverviewSection';
-import NeedToKnow from '@/components/tank/NeedToKnow';
-import FishPlants from '@/components/tank/FishPlants';
-import WaterTestCard from '@/components/tank/WaterTestCard';
-import Colors from '../colors';
-import { Species, TankDetail } from '../data/tankDetails';
-import { useTankApi } from '../hooks/useTankApi';
-import { useFishApi } from '../hooks/useFishApi';
-import { usePlantApi } from '../hooks/usePlantApi';
-import useWaterTestApi, { WaterTestRecord } from '../hooks/useWaterTestApi';
+import PhotoCard from '@/components/kit/PhotoCard';
+import Section from '@/components/kit/Section';
+import SpecGrid, { SpecItem } from '@/components/kit/SpecGrid';
+import SpeciesHero from '@/components/kit/SpeciesHero';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Palette, qualityTone } from '@/constants/palette';
+import Colors from '@/lib/colors';
+import { Species, TankDetail } from '@/lib/data/tankDetails';
+import { useTankApi } from '@/lib/hooks/useTankApi';
+import { useFishApi } from '@/lib/hooks/useFishApi';
+import { usePlantApi } from '@/lib/hooks/usePlantApi';
+import useWaterTestApi, { WaterTestRecord } from '@/lib/hooks/useWaterTestApi';
 import { auth } from '@/firebase';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -27,6 +28,7 @@ const CARD_STRIDE = CARD_WIDTH + CARD_GAP;
 const TILE_GAP = 16;
 const TILE_WIDTH = (SCREEN_WIDTH - 40 - TILE_GAP) / 2;
 const TILE_HEIGHT = 250;
+const SPECIES_CARD = Math.min(220, SCREEN_WIDTH * 0.52);
 
 // Uses the shared HoldAction gesture (save = quick hold, delete = longer confirm hold).
 function HoldActionButton({ style, onHold, disabled, fillColor, text }: { style: object; onHold: () => void; disabled: boolean; fillColor: string; text: string }) {
@@ -201,7 +203,7 @@ export default function TankInfoScreen() {
 
   const pickTankImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       quality: 0.8,
       base64: true,
@@ -247,86 +249,124 @@ export default function TankInfoScreen() {
     }
   };
 
+  // --- display helpers -------------------------------------------------------
+  const c = tank.conditions;
+  const quality = qualityTone(c.waterQuality);
+  const num = (v: unknown) => { const n = parseFloat(String(v)); return Number.isFinite(n) ? n : null; };
+  const ammonia = num(c.ammoniaPpm);
+  const nitrite = num(c.nitritePpm);
+  const phValue = num(c.ph);
+  const temp = num(c.preferredTempC);
+  const hasTest = c.ph !== '' || c.ammoniaPpm !== '' || c.nitritePpm !== '';
+  const days = hasTest ? c.lastTestedDaysAgo : null;
+  const toxic = (ammonia ?? 0) > 0 || (nitrite ?? 0) > 0;
+  const fishCount = tank.species.filter((item) => item.type === 'fish').length;
+  const plantCount = tank.species.filter((item) => item.type === 'plant').length;
+
+  const careItems: SpecItem[] = [
+    { icon: 'thermometer', label: 'Temperature', value: temp !== null ? `${temp}°C` : null, tone: temp !== null && (temp < 18 || temp > 30) ? 'warn' : 'default' },
+    { icon: 'drop.fill', label: 'pH level', value: phValue ?? null, tone: phValue !== null && (phValue < 6 || phValue > 8.2) ? 'warn' : 'default' },
+    { icon: 'ruler', label: 'Tank size', value: tank.tankSize ? `${tank.tankSize} L` : null },
+    { icon: 'arrow.triangle.2.circlepath', label: 'Water change', value: toxic ? 'Today' : 'Weekly', tone: toxic ? 'bad' : 'default' },
+    { icon: 'chart.bar', label: 'Bioload', value: toxic ? 'High' : fishCount > 3 ? 'Medium' : 'Low', tone: toxic ? 'bad' : 'good' },
+    { icon: 'calendar', label: 'Next test', value: days === null ? 'Now' : days >= 7 ? 'Due' : `${7 - days} day${7 - days === 1 ? "" : "s"}`, tone: days === null || days >= 7 ? 'warn' : 'default' },
+  ];
+
+  const readingTone = (value: number | null, warnAbove: number): SpecItem['tone'] => (value === null ? 'default' : value > warnAbove ? 'bad' : 'good');
+  const testItems: SpecItem[] = [
+    { icon: 'drop.fill', label: 'pH', value: phValue ?? null },
+    { icon: 'thermometer', label: 'Temp', value: temp !== null ? `${temp}°C` : null },
+    { icon: 'testtube.2', label: 'Ammonia', value: ammonia !== null ? `${ammonia} ppm` : null, tone: readingTone(ammonia, 0) },
+    { icon: 'testtube.2', label: 'Nitrite', value: nitrite !== null ? `${nitrite} ppm` : null, tone: readingTone(nitrite, 0) },
+  ];
+
+  const openSpecies = (item: Species) => {
+    const dest = item.type === 'plant' ? '/(tabs)/plantDetails' : '/(tabs)/fishDetails';
+    router.push({ pathname: dest, params: { speciesId: item.id } });
+  };
+
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#121214" />
-      <SafeAreaView style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          
-          <HeaderRow onBack={() => router.back()} onMenu={openEditModal} />
+      <StatusBar barStyle="light-content" />
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <SpeciesHero
+          image={tankImageSource}
+          title={tank.tankName}
+          subtitle={`Freshwater · ${tank.tankSize || 0} L · ${fishCount} fish · ${plantCount} plants`}
+          chips={[{ label: quality.label, tone: quality.level === 'excellent' ? 'good' : quality.level === 'attention' ? 'bad' : quality.level === 'fair' ? 'warn' : 'default' }]}
+          height={420}
+          right={(
+            <HoldAction
+              onComplete={openEditModal}
+              label="Edit"
+              accessibilityLabel="Hold to edit tank"
+              icon={<IconSymbol name="pencil" size={16} color={Palette.text} />}
+              style={styles.editPill}
+            />
+          )}
+        />
 
-          {/* Title + Subtitle */}
-          <Text style={styles.tankName}>{tank.tankName}</Text>
-          <Text style={styles.tankSubtitle}>Fresh water</Text>
-
-          {/* Hero Image Section */}
-          <View style={styles.hero}>
-            <View style={styles.heroSideColumn}>
-              <View style={styles.heroThumbStack}>
-                {tank.species.map((item, index) => (
-                  <View
-                    key={item.id}
-                    style={[
-                      styles.heroSmallThumb,
-                      index !== 0 && styles.heroSmallThumbSpacing,
-                    ]}
-                  >
-                    {item.image ? <Image source={{ uri: item.image }} style={styles.heroSmallThumbImage} resizeMode="cover" /> : null}
-                  </View>
-                ))}
-              </View>
+        <View style={styles.body}>
+          {/* AI overview: 1-2 sentences */}
+          <View style={[styles.overview, toxic && styles.overviewBad]}>
+            <View style={styles.overviewHead}>
+              <IconSymbol name="sparkles" size={16} color={toxic ? Palette.danger : Palette.accent} />
+              <Text style={styles.overviewLabel}>Quick overview</Text>
             </View>
-
-            <View style={styles.heroPreviewContainer}>
-              <View style={styles.heroPreviewBackground}>
-                {tankImageSource ? <Image source={tankImageSource} style={styles.heroPreviewBackgroundImage} blurRadius={24} /> : null}
-                <View style={styles.heroPreviewOverlay} />
-              </View>
-              <View style={styles.heroCircleContainer}>
-                <View style={styles.heroCircleGlow} />
-                {tankImageSource ? <Image source={tankImageSource} style={styles.heroCircleImage} resizeMode="cover" /> : null}
-              </View>
-            </View>
+            <Text style={styles.overviewText}>
+              {tank.overviewSummary?.trim() || 'Add fish, plants or a water test and you will get a quick overview of your tank here.'}
+            </Text>
           </View>
 
-          <OverviewSection overview={tank.overviewSummary} />
+          <Section title="Aquarium care" icon="water.waves">
+            <SpecGrid items={careItems} />
+          </Section>
 
-          <NeedToKnow conditions={tank.conditions} tankSize={tank.tankSize} />
+          <Section title="Latest water test" icon="testtube.2" hint={hasTest ? (days === 0 ? 'Today' : `${days} day${days === 1 ? '' : 's'} ago`) : 'No test yet'}>
+            <Pressable onPress={() => router.push({ pathname: '/(tabs)/waterTestDetails', params: { tankId: tank.tankId } })} accessibilityLabel="Open water test details">
+              <View style={styles.testCard}>
+                {hasTest ? (
+                  <>
+                    <View style={[styles.qualityBar, { backgroundColor: quality.soft }]}>
+                      <View style={[styles.qualityDot, { backgroundColor: quality.color }]} />
+                      <Text style={[styles.qualityText, { color: quality.color }]}>{quality.label}</Text>
+                      <Text style={styles.qualityMore}>See full report ›</Text>
+                    </View>
+                    <SpecGrid items={testItems} columns={2} />
+                  </>
+                ) : (
+                  <View style={styles.testEmpty}>
+                    <IconSymbol name="testtube.2" size={28} color={Palette.primaryBright} />
+                    <Text style={styles.testEmptyTitle}>No water test yet</Text>
+                    <Text style={styles.testEmptyText}>Tap here to log your first test. It only takes a minute.</Text>
+                  </View>
+                )}
+              </View>
+            </Pressable>
+          </Section>
 
-          <WaterTestCard
-            conditions={tank.conditions}
-            onPress={() => router.push({ pathname: '/(tabs)/waterTestDetails', params: { tankId: tank.tankId } })}
-          />
-
-          <FishPlants
-            species={tank.species}
-            speciesListRef={speciesListRef}
-            favorites={favorites}
-            toggleFavorite={toggleFavorite}
-            cardWidth={CARD_WIDTH}
-            cardStride={CARD_STRIDE}
-            onSpeciesScrollEnd={onSpeciesScrollEnd}
-            onSpeciesPress={(item) => {
-              const dest = item.type === 'plant' ? '/(tabs)/plantDetails' : '/(tabs)/fishDetails';
-              router.push({ pathname: dest, params: { speciesId: item.id } });
-            }}
-          />
-
-          {/* Pagination Dots */}
-          {tank.species.length > 1 && (
-            <View style={styles.dotsRow}>
-              {tank.species.map((s, i) => (
-                <TouchableOpacity key={s.id} onPress={() => goToIndex(i)} hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}>
-                  <View style={[styles.dot, i === activeIndex && styles.dotActive]} />
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-
-          {/* Action Button removed per request */}
-
-        </ScrollView>
-      </SafeAreaView>
+          <Section title="Fish & plants" icon="fish.fill" hint={tank.species.length ? `${tank.species.length} in this tank` : undefined}>
+            {tank.species.length ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} snapToInterval={SPECIES_CARD + 12} decelerationRate="fast" contentContainerStyle={{ gap: 12, paddingRight: 20 }}>
+                {tank.species.map((item) => (
+                  <PhotoCard
+                    key={item.id}
+                    image={item.image}
+                    title={item.name}
+                    subtitle={item.type === 'plant' ? item.speciesName : item.schoolSize && item.schoolSize !== 'Unknown' ? `School of ${item.schoolSize}` : item.speciesName}
+                    badge={item.type === 'plant' ? 'Plant' : 'Fish'}
+                    onPress={() => openSpecies(item)}
+                    style={{ width: SPECIES_CARD }}
+                    height={230}
+                  />
+                ))}
+              </ScrollView>
+            ) : (
+              <Text style={styles.emptyText}>No fish or plants in this tank yet. Add them from the Fish or Plant pages.</Text>
+            )}
+          </Section>
+        </View>
+      </ScrollView>
       <Modal visible={editVisible} transparent animationType="fade" onRequestClose={() => setEditVisible(false)}>
         <View style={styles.editBackdrop}>
           <View style={styles.editCard}>
@@ -363,12 +403,27 @@ const HERO_HEIGHT = 260;
 const THUMB_SIZE = 58;
 
 const styles = StyleSheet.create({
+  body: { paddingHorizontal: 20, paddingBottom: 48 },
+  editPill: { minHeight: 42, paddingHorizontal: 16, backgroundColor: 'rgba(12,14,18,0.55)', borderColor: 'rgba(255,255,255,0.14)' },
+  overview: { marginTop: 18, padding: 16, borderRadius: 22, backgroundColor: Palette.accentSoft, borderWidth: 1, borderColor: 'rgba(224,120,42,0.25)', gap: 8 },
+  overviewBad: { backgroundColor: Palette.dangerSoft, borderColor: Palette.dangerBorder },
+  overviewHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  overviewLabel: { color: Palette.textMuted, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase', fontFamily: 'Montserrat_700Bold' },
+  overviewText: { color: Palette.text, fontSize: 15, lineHeight: 23 },
+  testCard: { backgroundColor: Palette.surface, borderRadius: 24, padding: 10, gap: 10, borderWidth: 1, borderColor: Palette.border },
+  qualityBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 16 },
+  qualityDot: { width: 8, height: 8, borderRadius: 4 },
+  qualityText: { fontSize: 14, fontFamily: 'Montserrat_700Bold', flex: 1 },
+  qualityMore: { color: Palette.textMuted, fontSize: 12, fontFamily: 'Montserrat_600SemiBold' },
+  testEmpty: { alignItems: 'center', paddingVertical: 22, gap: 6 },
+  testEmptyTitle: { color: Palette.text, fontSize: 16, fontFamily: 'Montserrat_700Bold', marginTop: 4 },
+  testEmptyText: { color: Palette.textMuted, fontSize: 13, textAlign: 'center' },
+  emptyText: { color: Palette.textMuted, fontSize: 14, lineHeight: 20 },
   container: {
     flex: 1,
-    backgroundColor: '#121214',
+    backgroundColor: Palette.background,
   },
   scrollContent: {
-    paddingHorizontal: 20,
     paddingBottom: 40,
   },
   tankName: {
@@ -415,18 +470,14 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#1C1C1E',
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.18,
-    shadowRadius: 18,
     elevation: 4,
-  },
+    boxShadow: '0px 14px 18px rgba(0, 0, 0, 0.18)' },
   heroSmallThumbSpacing: {
     marginTop: 16,
   },
   heroSmallThumbSelected: {
     borderWidth: 2,
-    borderColor: '#5B8CFF',
+    borderColor: '#4FB3CC',
   },
   heroSmallThumbImage: {
     width: '100%',
@@ -442,14 +493,14 @@ const styles = StyleSheet.create({
     marginRight: -40,
   },
   heroPreviewBackground: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   heroPreviewBackgroundImage: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0.62,
   },
   heroPreviewOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(17, 17, 24, 0.45)',
   },
   heroCircleContainer: {
@@ -458,13 +509,9 @@ const styles = StyleSheet.create({
     borderRadius: (HERO_HEIGHT * 1.1) / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#1A2638',
-    shadowOffset: { width: 0, height: 26 },
-    shadowOpacity: 0.28,
-    shadowRadius: 42,
     elevation: 20,
     overflow: 'hidden',
-  },
+    boxShadow: '0px 26px 42px rgba(26, 38, 56, 0.28)' },
   heroCircleGlow: {
     position: 'absolute',
     width: '150%',

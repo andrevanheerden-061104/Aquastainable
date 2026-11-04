@@ -6,7 +6,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 
 import WaterTestTankSelector from '../../components/waterTest/WaterTestTankSelector';
 import { auth } from '@/firebase';
-import { TankRecord, useTankApi } from '../hooks/useTankApi';
+import { TankRecord, useTankApi } from '@/lib/hooks/useTankApi';
 
 export default function WaterTestScreen() {
   const router = useRouter();

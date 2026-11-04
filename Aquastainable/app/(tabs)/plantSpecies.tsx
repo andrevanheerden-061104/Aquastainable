@@ -1,14 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 
 import AddNewPlantCard from '@/components/fish&Plants/AddNewPlantCard';
 import AddPlantModal from '@/components/fish&Plants/AddPlantModal';
-import HoldActionButton from '@/components/fish&Plants/HoldActionButton';
+import HoldAction from '@/components/gestures/HoldAction';
+import PhotoCard from '@/components/kit/PhotoCard';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Palette } from '@/constants/palette';
 import { auth } from '@/firebase';
-import { SavedPlant, usePlantApi } from '@/app/hooks/usePlantApi';
+import { SavedPlant, usePlantApi } from '@/lib/hooks/usePlantApi';
 
 type SpeciesCardItem = SavedPlant;
 
@@ -56,8 +59,12 @@ export default function PlantSpeciesScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Plant Species</Text>
-        <Text style={styles.subtitle}>Your plants, tank by tank. Press and hold Delete to remove one.</Text>
+        <Text style={styles.titleLight}>Your</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>Plants</Text>
+          {species.length ? <View style={styles.count}><Text style={styles.countText}>{species.length}</Text></View> : null}
+        </View>
+        <Text style={styles.subtitle}>Tap a plant to see its care. Press and hold the bin to remove it.</Text>
       </View>
 
       <FlatList
@@ -71,32 +78,29 @@ export default function PlantSpeciesScreen() {
             return <AddNewPlantCard onPress={() => setAddPlantVisible(true)} />;
           }
 
-          const imageSource = item.image ? { uri: item.image } : undefined;
           return (
-            <View style={styles.card}>
-              <TouchableOpacity onPress={() => handlePress(item)} activeOpacity={0.9}>
-              {imageSource ? <Image source={imageSource} style={styles.image} resizeMode="cover" /> : <View style={styles.imageEmpty} />}
-              <View style={styles.cardBody}>
-                <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.scientific}>{item.scientificName}</Text>
-                <View style={styles.divider} />
-                <View style={styles.infoRow}>
-                  <Text style={styles.label}>Tank</Text>
-                  <Text style={[styles.value, styles.compactValue]} numberOfLines={1}>
-                    {(item.tankName || 'Unnamed tank').length > 10 ? `${(item.tankName || 'Unnamed tank').slice(0, 10)}...` : item.tankName || 'Unnamed tank'}
-                  </Text>
-                </View>
-              </View>
-              </TouchableOpacity>
-              <View style={styles.actionRow}>
-                <HoldActionButton label="Delete" onHold={() => { void removePlant(item); }} fillColor="#B83A45" style={styles.deleteAction} />
-              </View>
-            </View>
+            <PhotoCard
+              image={item.image}
+              title={item.name}
+              subtitle={item.tankName || 'Unnamed tank'}
+              badge={item.growthRate ? `${item.growthRate} growth` : undefined}
+              onPress={() => handlePress(item)}
+              height={200}
+              style={styles.card}
+              footer={(
+                <>
+                  <View style={styles.cardMeta}><IconSymbol name="sun.max" size={14} color={Palette.accent} /><Text style={styles.cardMetaText} numberOfLines={1}>{item.light || 'Light –'}</Text></View>
+                  <HoldAction onComplete={() => { void removePlant(item); }} tone="danger" speed="confirm" accessibilityLabel={`Hold to delete ${item.name}`} style={styles.cardIcon} contentStyle={{ gap: 0 }}>
+                    <IconSymbol name="trash" size={16} color={Palette.dangerText} />
+                  </HoldAction>
+                </>
+              )}
+            />
           );
         }}
       />
       {loading ? <ActivityIndicator color="#FFFFFF" style={styles.loading} /> : null}
-      {!loading && !error && species.length === 0 ? <Text style={styles.emptyState}>No plants have been added to your tanks yet.</Text> : null}
+      {!loading && !error && species.length === 0 ? <Text style={styles.emptyState}>No plants yet. Hold the card above to add your first plant.</Text> : null}
       {error ? <Text style={styles.emptyState}>Unable to load your plants right now.</Text> : null}
       <AddPlantModal visible={addPlantVisible} onClose={() => { setAddPlantVisible(false); loadPlants(); }} />
     </SafeAreaView>
@@ -104,101 +108,20 @@ export default function PlantSpeciesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#090A0F',
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 56,
-    paddingBottom: 12,
-  },
-  title: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
-  },
-  subtitle: {
-    color: '#8F97A6',
-    fontSize: 14,
-    marginTop: 6,
-  },
-  list: {
-    paddingHorizontal: 12,
-    paddingBottom: 32,
-    paddingTop: 8,
-  },
-  row: {
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  card: {
-    backgroundColor: '#14151B',
-    borderRadius: 22,
-    overflow: 'hidden',
-    marginTop: 8,
-    marginHorizontal: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    width: '46%',
-  },
-  image: {
-    width: '100%',
-    height: 150,
-  },
-  imageEmpty: {
-    height: 150,
-    backgroundColor: '#20232C',
-  },
-  cardBody: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  name: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  scientific: {
-    color: '#8F97A6',
-    fontSize: 13,
-    marginTop: 4,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  label: {
-    color: '#8F97A6',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  value: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  compactValue: {
-    maxWidth: 90,
-    textAlign: 'right',
-  },
-  loading: {
-    marginTop: 16,
-  },
-  emptyState: {
-    color: '#8F97A6',
-    textAlign: 'center',
-    marginHorizontal: 20,
-    marginTop: 20,
-  },
-  actionRow: { padding: 10 },
-  deleteAction: { backgroundColor: '#6F2028' },
+  container: { flex: 1, backgroundColor: Palette.background },
+  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 14 },
+  titleLight: { color: 'rgba(244,246,248,0.8)', fontSize: 26, fontFamily: 'Montserrat_400Regular' },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  title: { color: Palette.text, fontSize: 34, lineHeight: 40, fontFamily: 'Montserrat_700Bold' },
+  count: { minWidth: 30, height: 30, paddingHorizontal: 8, borderRadius: 15, backgroundColor: Palette.successSoft, alignItems: 'center', justifyContent: 'center' },
+  countText: { color: Palette.success, fontSize: 14, fontFamily: 'Montserrat_700Bold' },
+  subtitle: { color: Palette.textMuted, fontSize: 13, lineHeight: 19, marginTop: 6 },
+  list: { paddingHorizontal: 16, paddingBottom: 48, gap: 12 },
+  row: { gap: 12 },
+  card: { flex: 1, maxWidth: '50%' },
+  cardMeta: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 8 },
+  cardMetaText: { color: Palette.textMuted, fontSize: 12, flex: 1 },
+  cardIcon: { width: 38, height: 38, minHeight: 38, borderRadius: 19, paddingHorizontal: 0 },
+  loading: { marginTop: 24 },
+  emptyState: { color: Palette.textMuted, textAlign: 'center', paddingHorizontal: 32, marginTop: 8, marginBottom: 24 },
 });

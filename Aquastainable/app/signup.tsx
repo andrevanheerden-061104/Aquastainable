@@ -7,8 +7,8 @@ import AuthLayout from '@/components/auth/AuthLayout';
 import SwipeToConfirm from '@/components/gestures/SwipeToConfirm';
 import { Palette } from '@/constants/palette';
 
-import { OTP_ENABLED } from './hooks/authHeader';
-import { useAuthApi } from './hooks/useAuthApi';
+import { OTP_ENABLED } from '@/lib/hooks/authHeader';
+import { useAuthApi } from '@/lib/hooks/useAuthApi';
 
 export default function SignUpScreen() {
   const router = useRouter();

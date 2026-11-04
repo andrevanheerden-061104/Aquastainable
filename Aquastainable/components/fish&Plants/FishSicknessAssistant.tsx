@@ -10,8 +10,11 @@ import {
   View,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import Colors from '../../app/colors';
+import Colors from '@/lib/colors';
 import SwipeCheckButton from './SwipeCheckButton';
+import HoldAction from '@/components/gestures/HoldAction';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Palette } from '@/constants/palette';
 
 export type FishSicknessPrefill = {
   text: string;
@@ -105,14 +108,14 @@ export default function FishSicknessAssistant({ speciesName, onSendToAI }: Props
     let result;
     if (mode === 'camera') {
       result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         quality: 0.8,
         allowsEditing: false,
         base64: true,
       });
     } else {
       result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsMultipleSelection: true,
         selectionLimit: Math.max(1, 3 - mediaUris.length),
         quality: 0.8,
@@ -136,22 +139,22 @@ export default function FishSicknessAssistant({ speciesName, onSendToAI }: Props
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Fish sickness assistant</Text>
-      <Text style={styles.sectionSubtitle}>
-        Hold the button for 0.2 seconds to start a sickness report for your school. Then add details, attach media, and swipe to send it to the AI.
-      </Text>
-
-      <TouchableOpacity
-        style={styles.holdButton}
-        onPressIn={startHold}
-        onPressOut={cancelHold}
-        activeOpacity={0.8}
-      >
-        <View style={styles.holdProgressBackground}>
-          <View style={[styles.holdProgressFill, { width: `${holdProgress * 100}%` }]} />
+      <View style={styles.headRow}>
+        <View style={styles.headIcon}>
+          <IconSymbol name="cross.case" size={20} color={Palette.accent} />
         </View>
-        <Text style={styles.holdButtonText}>{isHolding ? 'Keep holding...' : 'Hold to start report'}</Text>
-      </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.sectionTitle}>Fish looking unwell?</Text>
+          <Text style={styles.sectionSubtitle}>Describe what you see, add a photo, and get a quick answer on what it is and how to treat it.</Text>
+        </View>
+      </View>
+
+      <HoldAction
+        onComplete={() => setModalVisible(true)}
+        label="Hold to start a sickness report"
+        icon={<IconSymbol name="stethoscope" size={18} color={Palette.text} />}
+        accessibilityLabel="Hold to start a sickness report"
+      />
 
       <Modal visible={modalVisible} transparent animationType="fade" onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalBackdrop}>
@@ -191,25 +194,26 @@ export default function FishSicknessAssistant({ speciesName, onSendToAI }: Props
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 24,
-    marginBottom: 24,
-    padding: 20,
+    marginTop: 4,
+    padding: 18,
+    gap: 16,
     borderRadius: 24,
-    backgroundColor: '#14151B',
-    borderWidth: 0.5,
-    borderColor: '#2c2e3a',
+    backgroundColor: Palette.surface,
+    borderWidth: 1,
+    borderColor: Palette.border,
   },
+  headRow: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
+  headIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: Palette.accentSoft, alignItems: 'center', justifyContent: 'center' },
   sectionTitle: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 8,
+    color: Palette.text,
+    fontSize: 17,
+    fontWeight: '800',
+    marginBottom: 4,
   },
   sectionSubtitle: {
-    color: '#B3B9C9',
+    color: Palette.textMuted,
     fontSize: 13,
-    lineHeight: 20,
-    marginBottom: 18,
+    lineHeight: 19,
   },
   holdButton: {
     backgroundColor: '#1C1C1E',
@@ -225,7 +229,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   holdProgressBackground: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 24,
   },
@@ -243,7 +247,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backdropTouchable: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   modalCard: {
     marginHorizontal: 20,

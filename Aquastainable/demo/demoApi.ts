@@ -22,14 +22,14 @@ const tanks = [
   {
     id: 'tank-1', tankId: 'tank-1', user_id: 'demo-user', tankName: 'Guppy Kingdom', tankImg: img.forest,
     waterType: 'Freshwater', tankSize: 50, createdAt: daysAgo(60), aquaCare: {},
-    overview: 'Your 50 L tank is in great shape. Water is excellent and the guppies are thriving.\n\n- Do a 10% water change every 2 weeks\n- Trim the duckweed so light reaches the bottom\n- You can add 3–5 more guppies',
+    overview: 'Guppy Kingdom is in great shape: the water tested excellent and your guppies have plenty of space and plants. Just keep the duckweed trimmed so light reaches the bottom.',
     testDate: daysAgo(2), waterQuality: 'Excellent', preferredTempC: '22–26', temperatureC: '24', lastTestedDaysAgo: 2,
     ph: '7.1', ammoniaPpm: '0', nitritePpm: '0',
   },
   {
     id: 'tank-2', tankId: 'tank-2', user_id: 'demo-user', tankName: 'Goldie Lounge', tankImg: img.living,
     waterType: 'Freshwater', tankSize: 120, createdAt: daysAgo(30), aquaCare: {},
-    overview: 'Ammonia is a little high for goldfish.\n\n- Change 25% of the water today\n- Feed less for 3 days\n- Test again in 48 hours',
+    overview: 'Goldie Lounge has ammonia and nitrite showing, which is harmful to your goldfish. Do a 25% water change today and feed less for a few days.',
     testDate: daysAgo(6), waterQuality: 'Needs attention', preferredTempC: '18–22', temperatureC: '21', lastTestedDaysAgo: 6,
     ph: '7.6', ammoniaPpm: '0.5', nitritePpm: '0.25',
   },
@@ -98,18 +98,18 @@ const demoAnswer = (message: string) => {
     return "I can only help with fish. Ask me about your fish's health, feeding, tank mates or water.";
   }
   if (text.includes('spot')) {
-    return '**It is most likely ich (white spot).**\nIt is a common tiny parasite and easy to treat early.\n\n**Do this**\n- Raise the heat slowly to 28 °C over a day\n- Add ich treatment from a fish shop, follow the label\n- Change 25% of the water every 2 days\n\n**Watch for**\n- Fast breathing or not eating. Then call a fish shop or vet.';
+    return "Those small white spots are most likely **ich** (white spot disease). It's a tiny parasite that often shows up after a sudden temperature drop or when new fish are added. The good news is it's very treatable if you start early.\n\n**How to treat it**\n- Raise the temperature slowly to about 28 °C over a day\n- Add an ich treatment from your fish shop and follow the label\n- Do a 25% water change every 2–3 days, using conditioner\n- Keep treating for a few days after the spots are gone\n\nSee a vet or fish shop if the fish stops eating, breathes fast, or the spots keep spreading after a week.";
   }
   if (text.includes('feed')) {
-    return '**Feed a small pinch once or twice a day.**\nOnly give what your fish finish in 2 minutes.\n\n**Do this**\n- Skip feeding one day a week\n- Scoop out food that sinks and stays\n- Use flakes made for Guppy and Fancy Goldfish';
+    return "Feed your fish a small pinch once or twice a day — only as much as they finish in about 2 minutes. Overfeeding is the most common beginner mistake, because leftover food rots and makes the water dirty.\n\n- Skip one feeding day a week\n- Scoop out any food left on the bottom\n- Use flakes or micro pellets sized for Guppy and Fancy Goldfish";
   }
   if (text.includes('live with') || text.includes('tank mate')) {
-    return '**Guppies get on well with other small, calm fish.**\nIn Guppy Kingdom (50 L) there is room for one small group.\n\n**Do this**\n- Add 6 neon tetras or 6 corydoras\n- Never add goldfish: they need cold water\n- Add new fish slowly, a few at a time';
+    return "Guppies are peaceful, so they do best with other small, calm fish that like warm water. In Guppy Kingdom (50 L) you have room for one small group of tank mates.\n\n**Good choices**\n- 6 neon tetras or 6 corydoras catfish\n- Cherry shrimp (the guppies may eat babies)\n\nAvoid goldfish — they need cold water and grow far too big for that tank.";
   }
   if (text.includes('ammonia') || text.includes('water') || text.includes('safe')) {
-    return '**Act now: Goldie Lounge has ammonia, which burns fish gills.**\nGuppy Kingdom is safe, but Goldie Lounge needs help today.\n\n**Do this**\n- Change 25% of the water today, use conditioner\n- Feed half as much for 3 days\n- Test again in 2 days\n\n**Watch for**\n- Goldfish gasping at the top. Change more water if so.';
+    return "Guppy Kingdom is safe, but **Goldie Lounge needs help today**: it has ammonia and nitrite, which burn your goldfish's gills even in small amounts. This usually comes from overfeeding or a filter that can't keep up.\n\n**What to do**\n- Change 25% of the water today, using water conditioner\n- Feed half as much for 3 days\n- Test again in 2 days and repeat if still above 0\n\nSee a vet or fish shop if your goldfish are gasping at the surface.";
   }
-  return '**Keep guppies at 24–26 °C with pH around 7.**\nThat matches your Guppy Kingdom tank right now.\n\n**Do this**\n- Test the water every week\n- Change 10–20% of the water every 1–2 weeks';
+  return "Guppies are happiest at 24–26 °C with a pH around 7, which matches your Guppy Kingdom tank right now. Keep doing what you're doing: test the water weekly and change 10–20% every week or two.";
 };
 
 const json = (config: InternalAxiosRequestConfig, data: unknown, status = 200): AxiosResponse => ({

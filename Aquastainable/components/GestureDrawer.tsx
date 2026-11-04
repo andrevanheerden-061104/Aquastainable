@@ -3,7 +3,7 @@
 // shared value, so the screen no longer re-renders on every frame of the drag.
 import { usePathname, useRouter } from 'expo-router';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
@@ -44,7 +44,9 @@ export function GestureDrawer({ children }: { children: React.ReactNode }) {
     runOnJS(setOpen)(toOpen);
   };
 
-  const pan = Gesture.Pan()
+  // One gesture per GestureDetector. Sharing a single gesture between the edge strip
+  // and the panel crashed on web ("No handler for tag") when the strip unmounted.
+  const makePan = () => Gesture.Pan()
     .activeOffsetX([-12, 12])
     .failOffsetY([-14, 14])
     .onBegin(() => {
@@ -59,6 +61,8 @@ export function GestureDrawer({ children }: { children: React.ReactNode }) {
       const flungClosed = event.velocityX < -500;
       settle(flungOpen || (!flungClosed && position.value > 0.4));
     });
+  const edgePan = useMemo(makePan, [drawerWidth]); // eslint-disable-line react-hooks/exhaustive-deps
+  const panelPan = useMemo(makePan, [drawerWidth]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const closeDrawer = () => {
     position.value = withTiming(0, { duration: 200 });
@@ -89,20 +93,18 @@ export function GestureDrawer({ children }: { children: React.ReactNode }) {
     <View style={styles.container}>
       <View style={styles.mainContent}>{children}</View>
 
-      <Animated.View pointerEvents={open ? 'auto' : 'none'} style={[styles.backdrop, backdropStyle]}>
+      <Animated.View style={[styles.backdrop, backdropStyle, { pointerEvents: open ? 'auto' : 'none' }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={closeDrawer} accessibilityLabel="Close menu" />
       </Animated.View>
 
       {/* Edge strip: only this area starts the swipe, so scrolling and carousels keep working. */}
-      {!open ? (
-        <GestureDetector gesture={pan}>
-          <Animated.View style={[styles.edge, handleStyle]} accessibilityLabel="Swipe right to open the menu">
-            <View style={styles.edgePill} />
-          </Animated.View>
-        </GestureDetector>
-      ) : null}
+      <GestureDetector gesture={edgePan}>
+        <Animated.View style={[styles.edge, handleStyle, { pointerEvents: open ? 'none' : 'auto' }]} accessibilityLabel="Swipe right to open the menu">
+          <View style={styles.edgePill} />
+        </Animated.View>
+      </GestureDetector>
 
-      <GestureDetector gesture={pan}>
+      <GestureDetector gesture={panelPan}>
         <Animated.View style={[styles.panel, { width: drawerWidth }, panelStyle]}>
           <View style={styles.profile}>
             {user?.photoURL ? (
@@ -161,9 +163,7 @@ const styles = StyleSheet.create({
   panel: {
     position: 'absolute', top: 0, bottom: 0, left: 0, zIndex: 100,
     backgroundColor: Palette.surface, borderRightWidth: 1, borderRightColor: Palette.border,
-    paddingTop: 64, paddingHorizontal: 18, paddingBottom: 28,
-    shadowColor: '#000', shadowOffset: { width: 6, height: 0 }, shadowOpacity: 0.45, shadowRadius: 18, elevation: 16,
-  },
+    paddingTop: 64, paddingHorizontal: 18, paddingBottom: 28, boxShadow: '6px 0px 18px rgba(0, 0, 0, 0.45)' },
   profile: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingBottom: 22, borderBottomWidth: 1, borderBottomColor: Palette.border, marginBottom: 18 },
   avatar: { width: 48, height: 48, borderRadius: 24, borderWidth: 2, borderColor: Palette.primaryBorder },
   avatarFallback: { backgroundColor: Palette.primarySoft, alignItems: 'center', justifyContent: 'center' },

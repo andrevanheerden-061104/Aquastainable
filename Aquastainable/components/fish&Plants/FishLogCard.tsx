@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   backdropTouchable: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   modalCard: {
     overflow: 'hidden',
@@ -340,12 +340,12 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: '#1B1D26',
     borderWidth: 1,
-    borderColor: '#5B8CFF',
+    borderColor: '#4FB3CC',
     paddingVertical: 12,
     marginBottom: 12,
   },
   editFill: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#2563EB',
   },
   editButtonText: {
@@ -359,11 +359,11 @@ const styles = StyleSheet.create({
     position: 'relative',
     alignItems: 'center',
     borderRadius: 14,
-    backgroundColor: '#5B8CFF',
+    backgroundColor: '#4FB3CC',
     paddingVertical: 12,
   },
   closeFill: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#2563EB',
   },
   closeButtonText: {
