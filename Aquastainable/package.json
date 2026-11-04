@@ -8,7 +8,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "build:showcase": "node scripts/build-showcase.js",
+    "build:showcase:demo": "node scripts/build-showcase.js --demo"
   },
   "dependencies": {
     "@expo-google-fonts/montserrat": "^0.4.2",
