@@ -1,6 +1,16 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
+import { Palette, qualityTone } from '@/constants/palette';
+
+const ago = (value?: string) => {
+  if (!value) return 'No test yet';
+  const time = new Date(value).getTime();
+  if (!Number.isFinite(time)) return value;
+  const days = Math.max(0, Math.floor((Date.now() - time) / 86400000));
+  return days === 0 ? 'Tested today' : days === 1 ? 'Tested yesterday' : `Tested ${days} days ago`;
+};
+
 type Props = {
   tanks: Array<{
     id: string;
@@ -21,18 +31,16 @@ export default function WaterTestTankSelector({ tanks, onSelect }: Props) {
           <View style={styles.cardBody}>
             <Text style={styles.title}>{tank.name}</Text>
             <View style={styles.divider} />
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Test date</Text>
-              <Text style={[styles.value, styles.compactValue]} numberOfLines={1}>
-                {tank.testDate || '~'}
-              </Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Water quality</Text>
-              <Text style={[styles.value, styles.compactValue]} numberOfLines={1}>
-                {tank.waterQuality || '~'}
-              </Text>
-            </View>
+            {(() => {
+              const tone = qualityTone(tank.waterQuality);
+              return (
+                <View style={[styles.pill, { backgroundColor: tone.soft }]}>
+                  <View style={[styles.pillDot, { backgroundColor: tone.color }]} />
+                  <Text style={[styles.pillText, { color: tone.color }]} numberOfLines={1}>{tone.label}</Text>
+                </View>
+              );
+            })()}
+            <Text style={styles.when} numberOfLines={1}>{ago(tank.testDate)}</Text>
           </View>
         </TouchableOpacity>
       ))}
@@ -41,13 +49,17 @@ export default function WaterTestTankSelector({ tanks, onSelect }: Props) {
 }
 
 const styles = StyleSheet.create({
+  pill: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
+  pillDot: { width: 7, height: 7, borderRadius: 4 },
+  pillText: { fontSize: 12, fontFamily: 'Montserrat_700Bold' },
+  when: { color: Palette.textMuted, fontSize: 12, marginTop: 8 },
   container: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
   card: {
-    backgroundColor: '#14151B',
+    backgroundColor: Palette.surface,
     borderRadius: 22,
     overflow: 'hidden',
     borderWidth: 1,

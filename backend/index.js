@@ -13,6 +13,8 @@ dotenv.config();
 const createFishRouter = require('./fish/routes');
 const createPlantRouter = require('./plant/routes');
 const createAiRouter = require('./ai/routes');
+const { createAuthGuard } = require('./auth/guard');
+const { createOtpRouter } = require('./auth/otp');
 
 const app = express();
 app.use(cors());
@@ -51,6 +53,10 @@ if (FIREBASE_PROJECT_ID && FIREBASE_CLIENT_EMAIL && firebasePrivateKey && FIREBA
 
 const db = FIREBASE_PROJECT_ID && FIREBASE_CLIENT_EMAIL && firebasePrivateKey && FIREBASE_API_KEY ? getFirestore() : null;
 const auth = FIREBASE_PROJECT_ID && FIREBASE_CLIENT_EMAIL && firebasePrivateKey && FIREBASE_API_KEY ? getAuth() : null;
+
+// Verify the Firebase ID token on every request (see auth/guard.js for the roll-out switches).
+app.use(createAuthGuard({ auth }));
+app.use('/auth/otp', createOtpRouter({ db, auth }));
 
 app.use('/fish', createFishRouter({ db }));
 app.use('/plants', createPlantRouter({ db }));

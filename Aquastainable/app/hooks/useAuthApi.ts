@@ -54,9 +54,19 @@ export function useAuthApi() {
     return userCredential.user;
   }, [requestApi]);
 
+  // 6-digit email code (second sign-in step)
+  const sendOtp = useCallback(async () => requestApi<{ sent: boolean; email: string; resendInSeconds: number }>('/auth/otp/send', {}), [requestApi]);
+
+  const verifyOtp = useCallback(async (code: string) => {
+    const result = await requestApi<{ verified: boolean }>('/auth/otp/verify', { code });
+    // Pick up the new "verified" claim so the backend accepts our requests.
+    await auth.currentUser?.getIdToken(true);
+    return result;
+  }, [requestApi]);
+
   const clearError = useCallback(() => setError(''), []);
 
-  return { loading, error, clearError, signUp, signIn };
+  return { loading, error, clearError, signUp, signIn, sendOtp, verifyOtp };
 }
 
 export default useAuthApi;

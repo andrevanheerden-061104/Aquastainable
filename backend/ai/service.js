@@ -1,5 +1,5 @@
 const groqProvider = require('./providers/groqProvider');
-const { AQUARIUM_SYSTEM_PROMPT, assistantPrompt, fishDataPrompt, plantDataPrompt, tankOverviewPrompt, fishCompatibilityPrompt, plantCompatibilityPrompt, waterTestPrompt } = require('./prompts');
+const { AQUARIUM_SYSTEM_PROMPT, FISH_ASSISTANT_PROMPT, assistantPrompt, fishDataPrompt, plantDataPrompt, tankOverviewPrompt, fishCompatibilityPrompt, plantCompatibilityPrompt, waterTestPrompt } = require('./prompts');
 
 function parseJsonResponse(response) {
   try {
@@ -36,14 +36,40 @@ async function generatePlantData(plant) {
   return { ...parseJsonResponse(result.response), model: result.model };
 }
 
+// Clean up the model's reply so the app can render it as headline + bullets.
+function tidyAnswer(text) {
+  const lines = String(text || '')
+    .replace(/\r/g, '')
+    .split('\n')
+    .map((line) => line.trim()
+      .replace(/^#{1,6}\s*/, '') // no markdown headings
+      .replace(/^(\d+)[.)]\s+/, '- ') // numbered -> bullets
+      .replace(/^[*•]\s+/, '- ')
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, '')) // no images
+    .filter((line, index, all) => line || (all[index - 1] && all[index - 1] !== ''));
+
+  // Keep at most 4 bullets in a row so answers stay short.
+  const out = [];
+  let run = 0;
+  for (const line of lines) {
+    run = line.startsWith('- ') ? run + 1 : 0;
+    if (run <= 4) out.push(line);
+  }
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
 async function answerAssistant(message, context, history = []) {
   const result = await groqProvider.generate({
     prompt: assistantPrompt(message, context),
-    system: AQUARIUM_SYSTEM_PROMPT,
-    history,
+    system: FISH_ASSISTANT_PROMPT,
+    // Short history keeps answers focused and cheaper.
+    history: history.slice(-8),
+    maxTokens: 1200,
+    temperature: 0.3,
+    reasoningEffort: 'low',
   });
 
-  return { answer: result.response, model: result.model };
+  return { answer: tidyAnswer(result.response), model: result.model };
 }
 
 async function generateTankOverview(data) {
@@ -91,6 +117,7 @@ async function reviewWaterTest(data) {
 
 module.exports = {
   answerAssistant,
+  tidyAnswer,
   generateFishData,
   generatePlantData,
   generateText,

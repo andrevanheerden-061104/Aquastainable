@@ -1,8 +1,11 @@
-﻿import { Link, useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Image, Keyboard, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import SwipeToConfirm from '@/components/gestures/SwipeToConfirm';
+
 import Colors from './colors';
+import { OTP_ENABLED } from './hooks/authHeader';
 import { useAuthApi } from './hooks/useAuthApi';
 
 const heroImage = require('../assets/logo/Fish.jpeg');
@@ -46,7 +49,7 @@ export default function SignUpScreen() {
         username: username.trim(),
         profileImageUrl: null,
       });
-      router.replace('/loading');
+      router.replace(OTP_ENABLED ? '/verify' : '/loading');
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Unable to create account.');
     }
@@ -122,9 +125,7 @@ export default function SignUpScreen() {
             </Pressable>
           </View>
 
-          <Pressable style={styles.primaryButton} onPress={handleSignUp} disabled={loading}>
-            <Text style={styles.primaryButtonText}>{loading ? 'Creating account...' : 'Continue with Email'}</Text>
-          </Pressable>
+          <SwipeToConfirm label="Swipe to create account" onConfirm={handleSignUp} loading={loading} style={{ marginTop: 8 }} />
 
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Already have an account?</Text>

@@ -1,163 +1,126 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, Modal, PanResponder, StyleSheet, Text, View } from 'react-native';
+// Water-change reminder banner shown once after sign-in.
+// Before: a full-screen Modal that blocked every touch on the home screen for 15 s.
+// Now: one compact banner at the top. The rest of the screen stays usable.
+// Swipe it up or sideways to dismiss. It also hides itself after 8 s.
 import { onAuthStateChanged } from 'firebase/auth';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { FadeInUp, FadeOutUp, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { auth } from '@/firebase';
 import { useTankApi } from '@/app/hooks/useTankApi';
 import useWaterTestApi, { WaterTestRecord } from '@/app/hooks/useWaterTestApi';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Palette } from '@/constants/palette';
+import { auth } from '@/firebase';
 
-type Reminder = {
-  id: string;
-  tankName: string;
-  reminder: string;
-};
+type Reminder = { id: string; tankName: string; reminder: string; urgent: boolean };
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const isUrgent = (text: string) => /today|now|overdue|asap/i.test(text);
 
 export default function WaterChangeToast() {
+  const insets = useSafeAreaInsets();
   const { getUserTanks } = useTankApi();
   const { getTankWaterTests } = useWaterTestApi();
-  const [visible, setVisible] = useState(false);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const shownUserRef = useRef<string | null>(null);
-  const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const x = useSharedValue(0);
+  const y = useSharedValue(0);
 
-  const dismissAll = useCallback(() => {
-    if (dismissTimer.current) clearTimeout(dismissTimer.current);
-    dismissTimer.current = null;
-    setVisible(false);
+  const dismiss = useCallback(() => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
     setReminders([]);
-  }, []);
-
-  const dismissReminder = useCallback((id: string) => {
-    setReminders((current) => {
-      const remaining = current.filter((item) => item.id !== id);
-      if (remaining.length === 0) setVisible(false);
-      return remaining;
-    });
   }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        shownUserRef.current = null;
-        return;
-      }
+      if (!user) { shownUserRef.current = null; return; }
       if (shownUserRef.current === user.uid) return;
       shownUserRef.current = user.uid;
-
       try {
         const tanks = await getUserTanks(user.uid);
-        const nextReminders = await Promise.all((Array.isArray(tanks) ? tanks : []).map(async (tank) => {
-          const tankDocumentId = tank.id || tank.tankId;
-          const tests = await getTankWaterTests(tankDocumentId).catch(() => [] as WaterTestRecord[]);
-          const latestTest = [...tests].sort((left, right) => new Date(right.testedAt).getTime() - new Date(left.testedAt).getTime())[0];
-          return {
-            id: String(tankDocumentId),
-            tankName: tank.tankName || 'Unnamed tank',
-            reminder: latestTest?.nextWaterChange || 'Water change timing is not available yet.',
-          };
+        const next = await Promise.all((Array.isArray(tanks) ? tanks : []).map(async (tank) => {
+          const id = tank.id || tank.tankId;
+          const tests = await getTankWaterTests(id).catch(() => [] as WaterTestRecord[]);
+          const latest = [...tests].sort((a, b) => new Date(b.testedAt).getTime() - new Date(a.testedAt).getTime())[0];
+          const reminder = latest?.nextWaterChange || '';
+          return { id: String(id), tankName: tank.tankName || 'Unnamed tank', reminder, urgent: isUrgent(reminder) };
         }));
-
-        if (!nextReminders.length) return;
-        setReminders(nextReminders);
-        setVisible(true);
-        dismissTimer.current = setTimeout(dismissAll, 15000);
+        const withTiming_ = next.filter((item) => item.reminder).sort((a, b) => Number(b.urgent) - Number(a.urgent));
+        if (!withTiming_.length) return;
+        x.value = 0; y.value = 0;
+        setReminders(withTiming_);
+        timer.current = setTimeout(dismiss, 8000);
       } catch {
-        // A reminder should never block the user from entering the app.
+        // A reminder should never block the user from using the app.
+      }
+    });
+    return () => { unsubscribe(); if (timer.current) clearTimeout(timer.current); };
+  }, [dismiss, getTankWaterTests, getUserTanks, x, y]);
+
+  const swipe = Gesture.Pan()
+    .onUpdate((event) => {
+      x.value = event.translationX;
+      y.value = Math.min(0, event.translationY);
+    })
+    .onEnd((event) => {
+      if (Math.abs(event.translationX) > 90 || event.translationY < -40) {
+        x.value = withTiming(event.translationX > 0 ? 500 : event.translationX < -90 ? -500 : 0, { duration: 180 });
+        y.value = withTiming(event.translationY < -40 ? -200 : 0, { duration: 180 }, () => runOnJS(dismiss)());
+      } else {
+        x.value = withSpring(0);
+        y.value = withSpring(0);
       }
     });
 
-    return () => {
-      unsubscribe();
-      if (dismissTimer.current) clearTimeout(dismissTimer.current);
-    };
-  }, [dismissAll, getTankWaterTests, getUserTanks]);
+  const style = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }, { translateY: y.value }] }));
 
-  if (!visible) return null;
+  if (!reminders.length) return null;
+  const urgentCount = reminders.filter((item) => item.urgent).length;
 
   return (
-    <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={dismissAll}>
-      <View pointerEvents="box-none" style={styles.modalLayer}>
-        <View style={styles.toastStack}>
-          {reminders.map((item) => (
-            <ReminderToast key={item.id} reminder={item} onDismiss={dismissReminder} />
+    <View pointerEvents="box-none" style={[styles.layer, { top: insets.top + 8 }]}>
+      <GestureDetector gesture={swipe}>
+        <Animated.View entering={FadeInUp.duration(260)} exiting={FadeOutUp.duration(180)} style={[styles.card, urgentCount > 0 ? styles.cardUrgent : null, style]}>
+          <View style={styles.headRow}>
+            <View style={[styles.icon, urgentCount ? styles.iconUrgent : null]}>
+              <IconSymbol name="drop.fill" size={16} color={urgentCount ? Palette.warning : Palette.primaryBright} />
+            </View>
+            <Text style={styles.title}>
+              {urgentCount ? `Water change due today` : 'Upcoming water changes'}
+            </Text>
+          </View>
+          {reminders.slice(0, 3).map((item) => (
+            <View key={item.id} style={styles.row}>
+              <Text style={styles.tank} numberOfLines={1}>{item.tankName}</Text>
+              <Text style={[styles.when, item.urgent && styles.whenUrgent]} numberOfLines={1}>{item.reminder}</Text>
+            </View>
           ))}
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
-function ReminderToast({ reminder, onDismiss }: { reminder: Reminder; onDismiss: (id: string) => void }) {
-  const translateX = useRef(new Animated.Value(0)).current;
-  const panResponder = useRef(PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: () => true,
-    onPanResponderTerminationRequest: () => false,
-    onPanResponderGrant: () => translateX.stopAnimation(),
-    onPanResponderMove: (_, gestureState) => translateX.setValue(gestureState.dx),
-    onPanResponderRelease: (_, gestureState) => {
-      const direction = gestureState.dx < 0 ? -1 : 1;
-      if (Math.abs(gestureState.dx) > 50 || Math.abs(gestureState.vx) > 0.7) {
-        Animated.timing(translateX, { toValue: direction * (SCREEN_WIDTH + 40), duration: 180, useNativeDriver: true })
-          .start(() => onDismiss(reminder.id));
-      } else {
-        Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start();
-      }
-    },
-    onPanResponderTerminate: () => Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start(),
-  })).current;
-
-  return (
-    <Animated.View {...panResponder.panHandlers} style={[styles.toast, { transform: [{ translateX }] }]}>
-      <View style={styles.headerRow}>
-        <View>
-          <Text style={styles.eyebrow}>AQUA CARE</Text>
-          <Text style={styles.title}>Water change reminder</Text>
-        </View>
-      </View>
-      <View style={styles.reminderRow}>
-        <View style={styles.dot} />
-        <View style={styles.reminderText}>
-          <Text style={styles.tankName}>{reminder.tankName}</Text>
-          <Text style={styles.reminder}>{reminder.reminder}</Text>
-        </View>
-      </View>
-    </Animated.View>
+          <View style={styles.grabber} />
+        </Animated.View>
+      </GestureDetector>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  modalLayer: {
-    flex: 1,
+  layer: { position: 'absolute', left: 12, right: 12, zIndex: 50 },
+  card: {
+    backgroundColor: 'rgba(23,26,33,0.96)', borderRadius: 20, borderWidth: 1, borderColor: Palette.borderStrong,
+    paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10,
+    shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 10,
   },
-  toastStack: {
-    position: 'absolute',
-    top: 54,
-    left: 16,
-    right: 16,
-    zIndex: 20,
-    gap: 10,
-  },
-  toast: {
-    padding: 16,
-    borderRadius: 18,
-    backgroundColor: '#17232A',
-    borderWidth: 1,
-    borderColor: 'rgba(137, 217, 224, 0.35)',
-    shadowColor: '#000000',
-    shadowOpacity: 0.3,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
-  },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  eyebrow: { color: '#7FD5D9', fontSize: 10, fontWeight: '800', letterSpacing: 1 },
-  title: { color: '#FFFFFF', fontSize: 17, fontWeight: '800', marginTop: 3 },
-  reminderRow: { flexDirection: 'row', alignItems: 'flex-start', paddingTop: 9, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)' },
-  dot: { width: 8, height: 8, borderRadius: 4, marginTop: 5, marginRight: 10, backgroundColor: '#F2B66D' },
-  reminderText: { flex: 1 },
-  tankName: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
-  reminder: { color: '#B8C8CC', fontSize: 12, marginTop: 2 },
+  cardUrgent: { borderColor: 'rgba(251,191,36,0.4)' },
+  headRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
+  icon: { width: 28, height: 28, borderRadius: 14, backgroundColor: Palette.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  iconUrgent: { backgroundColor: Palette.warningSoft },
+  title: { color: Palette.text, fontSize: 15, fontFamily: 'Montserrat_700Bold' },
+  row: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, paddingVertical: 5 },
+  tank: { color: Palette.textMuted, fontSize: 13, flexShrink: 1 },
+  when: { color: Palette.text, fontSize: 13, fontFamily: 'Montserrat_600SemiBold' },
+  whenUrgent: { color: Palette.warning },
+  grabber: { alignSelf: 'center', width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.18)', marginTop: 8 },
 });

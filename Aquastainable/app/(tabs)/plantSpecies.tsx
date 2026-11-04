@@ -56,7 +56,7 @@ export default function PlantSpeciesScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Plant Species</Text>
-        <Text style={styles.subtitle}>Browse the plants currently in your tanks.</Text>
+        <Text style={styles.subtitle}>Your plants, tank by tank. Press and hold Delete to remove one.</Text>
       </View>
 
       <FlatList
@@ -88,7 +88,7 @@ export default function PlantSpeciesScreen() {
               </View>
               </TouchableOpacity>
               <View style={styles.actionRow}>
-                <HoldActionButton label="Hold to delete plant" onHold={() => { void removePlant(item); }} fillColor="#B83A45" style={styles.deleteAction} />
+                <HoldActionButton label="Delete" onHold={() => { void removePlant(item); }} fillColor="#B83A45" style={styles.deleteAction} />
               </View>
             </View>
           );

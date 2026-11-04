@@ -1,127 +1,62 @@
 // @ts-nocheck
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Alert,
-  Animated,
-  Dimensions,
-  FlatList,
-  Image,
-  ImageBackground,
-  Modal,
-  PanResponder,
-  Pressable,
-  SafeAreaView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+// Dashboard: one tank at a time, full-screen photo.
+// Gestures: swipe up/down = next/previous tank, swipe the bubble = open tank details,
+// hold + = add a tank, swipe in from the left edge = menu.
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { onAuthStateChanged } from 'firebase/auth';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, Image, ImageBackground, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+import HoldAction from '@/components/gestures/HoldAction';
+import SwipeToConfirm from '@/components/gestures/SwipeToConfirm';
+import Fade from '@/components/ui/Fade';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import HoldButton from '@/components/ui/HoldButton';
-import Colors from '../colors';
-import { auth } from '@/firebase';
-import { useTankApi } from '../hooks/useTankApi';
 import WaterChangeToast from '@/components/WaterChangeToast';
+import { Palette, qualityTone } from '@/constants/palette';
+import { auth } from '@/firebase';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { useTankApi } from '../hooks/useTankApi';
+import useWaterTestApi from '../hooks/useWaterTestApi';
 
-const SWIPE_THUMB_SIZE = 52;
-const SWIPE_PADDING = 4;
+const SIZE_PRESETS = ['20', '50', '100', '200'];
 
-function SwipeButton({ onSwipe }: { onSwipe: () => void }) {
-  const pan = useRef(new Animated.Value(0)).current;
-  const onSwipeRef = useRef(onSwipe);
-  const [containerWidth, setContainerWidth] = useState(0);
-  const containerWidthRef = useRef(0);
+const daysSince = (iso?: string) => {
+  if (!iso) return null;
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  return Number.isFinite(days) ? Math.max(0, days) : null;
+};
 
-  onSwipeRef.current = onSwipe;
+const lastTestLabel = (days: number | null) => {
+  if (days === null) return 'Never';
+  if (days === 0) return 'Today';
+  return `${days}d ago`;
+};
 
-  const maxTranslate = Math.max(0, containerWidth - SWIPE_THUMB_SIZE - SWIPE_PADDING * 2);
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dx) > Math.abs(gestureState.dy),
-      onPanResponderMove: (_, gestureState) => {
-        const activeMaxTranslate = Math.max(0, containerWidthRef.current - SWIPE_THUMB_SIZE - SWIPE_PADDING * 2);
-        const newValue = Math.max(0, Math.min(gestureState.dx, activeMaxTranslate));
-        pan.setValue(newValue);
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        const activeMaxTranslate = Math.max(0, containerWidthRef.current - SWIPE_THUMB_SIZE - SWIPE_PADDING * 2);
-
-        if (gestureState.dx >= activeMaxTranslate * 0.75) {
-          Animated.timing(pan, { toValue: activeMaxTranslate, duration: 120, useNativeDriver: true }).start(() => {
-            onSwipeRef.current();
-            setTimeout(() => {
-              Animated.spring(pan, { toValue: 0, friction: 6, useNativeDriver: true }).start();
-            }, 600);
-          });
-        } else {
-          Animated.spring(pan, { toValue: 0, friction: 5, useNativeDriver: true }).start();
-        }
-      },
-    })
-  ).current;
-
-  const textOpacity = pan.interpolate({
-    inputRange: [0, Math.max(1, maxTranslate * 0.5)],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-
-  return (
-    <View
-      style={styles.swipeTrack}
-      onLayout={(e) => {
-        containerWidthRef.current = e.nativeEvent.layout.width;
-        setContainerWidth(e.nativeEvent.layout.width);
-      }}
-    >
-      <Animated.Text style={[styles.swipeText, { opacity: textOpacity }]}>SWIPE FOR TANK INFO</Animated.Text>
-      <Animated.View
-        {...panResponder.panHandlers}
-        style={[styles.swipeThumb, { transform: [{ translateX: pan }] }]}
-      >
-        <IconSymbol name="chevron.right" size={22} color={Colors.white} style={styles.swipeIcon} />
-      </Animated.View>
-    </View>
-  );
-}
+// First useful sentence of the AI overview, so the dashboard shows one clear tip.
+const firstTip = (overview?: string) => {
+  if (!overview) return '';
+  const firstLine = overview.split('\n').map((line) => line.replace(/^[-*•\s]+/, '').trim()).find(Boolean) || '';
+  return firstLine.length > 140 ? `${firstLine.slice(0, 137)}…` : firstLine;
+};
 
 export default function HomeScreen() {
   const router = useRouter();
   const { createTank, getUserTanks, loading } = useTankApi();
+  const { getTankWaterTests } = useWaterTestApi();
   const [tanks, setTanks] = useState([]);
+  const [loaded, setLoaded] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [activeMetricIndex, setActiveMetricIndex] = useState(0);
+  const [latestTests, setLatestTests] = useState<Record<string, any>>({});
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const tanksRef = useRef<any[]>([]);
-  const [form, setForm] = useState({
-    tankName: '',
-    tankImg: '',
-    waterType: 'Freshwater',
-    tankSize: '20',
-  });
+  const [form, setForm] = useState({ tankName: '', tankImg: '', waterType: 'Freshwater', tankSize: '50' });
 
-  const metricsCardWidth = (SCREEN_WIDTH - 40 - 16) / 3;
-  const metricsCardGap = 8;
-  const metricsStepWidth = metricsCardWidth + metricsCardGap;
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUserId(user?.uid ?? null);
-    });
-
-    return () => unsubscribe();
-  }, []);
+  useEffect(() => onAuthStateChanged(auth, (user) => setCurrentUserId(user?.uid ?? null)), []);
 
   const loadTanks = useCallback(async () => {
     if (!currentUserId) {
@@ -129,83 +64,69 @@ export default function HomeScreen() {
       tanksRef.current = [];
       return;
     }
-
     try {
       const response = await getUserTanks(currentUserId);
       const nextTanks = Array.isArray(response) ? response : [];
       tanksRef.current = nextTanks;
       setTanks(nextTanks);
-      setActiveIndex(0);
-    } catch (error) {
+      setActiveIndex((index) => Math.min(index, Math.max(0, nextTanks.length - 1)));
+      // Latest water test per tank, for the status + stats on each card.
+      const entries = await Promise.all(nextTanks.map(async (tank) => {
+        const id = String(tank.tankId || tank.id);
+        const tests = await getTankWaterTests(id).catch(() => []);
+        const latest = [...tests].sort((a, b) => new Date(b.testedAt).getTime() - new Date(a.testedAt).getTime())[0];
+        return [id, latest];
+      }));
+      setLatestTests(Object.fromEntries(entries));
+    } catch {
       setTanks([]);
       tanksRef.current = [];
+    } finally {
+      setLoaded(true);
     }
-  }, [currentUserId, getUserTanks]);
+  }, [currentUserId, getTankWaterTests, getUserTanks]);
 
-  useFocusEffect(useCallback(() => {
-    loadTanks();
-  }, [loadTanks]));
+  useFocusEffect(useCallback(() => { void loadTanks(); }, [loadTanks]));
 
-  const screenPanResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, gestureState) =>
-        Math.abs(gestureState.dy) > Math.abs(gestureState.dx) && Math.abs(gestureState.dy) > 20,
-      onPanResponderRelease: (_, gestureState) => {
-        const tankCount = tanksRef.current.length;
-        if (tankCount === 0) {
-          return;
-        }
+  const step = (direction: 1 | -1) => {
+    const count = tanksRef.current.length;
+    if (count < 2) return;
+    setActiveIndex((prev) => (prev + direction + count) % count);
+  };
 
-        if (gestureState.dy < -40) {
-          setActiveIndex((prev) => (prev + 1) % tankCount);
-        } else if (gestureState.dy > 40) {
-          setActiveIndex((prev) => (prev - 1 + tankCount) % tankCount);
-        }
-      },
-    })
-  ).current;
+  // Vertical swipe anywhere on the photo switches tanks.
+  const tankSwipe = Gesture.Pan()
+    .runOnJS(true)
+    .activeOffsetY([-24, 24])
+    .failOffsetX([-18, 18])
+    .onEnd((event) => {
+      if (event.translationY < -50 || event.velocityY < -600) step(1);
+      else if (event.translationY > 50 || event.velocityY > 600) step(-1);
+    });
 
   const aquarium = tanks[activeIndex];
-  const currentNumber = activeIndex + 1;
-  const tankImage = aquarium?.tankImg ? { uri: aquarium.tankImg } : undefined;
+  const tankId = aquarium ? String(aquarium.tankId || aquarium.id) : '';
+  const latest = latestTests[tankId];
+  const readings = latest?.readings || {};
+  const quality = qualityTone(latest?.waterQuality || aquarium?.waterQuality);
+  const days = daysSince(latest?.testedAt || aquarium?.testDate);
+  const temp = readings.temperatureC || readings.temperature || aquarium?.temperatureC;
+  const ph = readings.ph || readings.pH || aquarium?.ph;
+  const tip = firstTip(aquarium?.overview);
 
-  const metricsData = [
-    { id: '1', label: 'WATER TYPE', value: aquarium?.waterType || 'Not available', accent: Colors.lightBlue },
-    { id: '2', label: 'VOLUME', value: aquarium ? `${Number(aquarium.tankSize || 0)} L` : 'Not available', accent: Colors.white },
-    { id: '3', label: 'OVERVIEW', value: aquarium?.overview ? 'Ready' : 'Not available', accent: Colors.lightBlue },
-  ];
+  const openTank = () => router.push({ pathname: '/(tabs)/tank/[id]', params: { id: tankId } });
 
-  const metricPageCount = metricsData.length;
-
-  const resetForm = () => {
-    setForm({ tankName: '', tankImg: '', waterType: 'Freshwater', tankSize: '20' });
-  };
+  const resetForm = () => setForm({ tankName: '', tankImg: '', waterType: 'Freshwater', tankSize: '50' });
 
   const handlePickTankImage = async (source: 'library' | 'camera') => {
     try {
       const pickerResult = source === 'library'
-        ? await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            quality: 0.8,
-            base64: true,
-          })
-        : await ImagePicker.launchCameraAsync({
-            allowsEditing: true,
-            quality: 0.8,
-            base64: true,
-          });
-
-      if (pickerResult.canceled || !pickerResult.assets?.[0]) {
-        return;
-      }
-
+        ? await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, quality: 0.8, base64: true })
+        : await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 0.8, base64: true });
+      if (pickerResult.canceled || !pickerResult.assets?.[0]) return;
       const asset = pickerResult.assets[0];
-      const imageData = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
-
-      setForm((prev) => ({ ...prev, tankImg: imageData }));
-    } catch (error) {
+      setForm((prev) => ({ ...prev, tankImg: asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri }));
+    } catch {
       Alert.alert('Image error', 'Unable to pick an image right now.');
     }
   };
@@ -215,473 +136,260 @@ export default function HomeScreen() {
       Alert.alert('Login required', 'Please sign in before creating a tank.');
       return;
     }
-
-    if (!form.tankName.trim() || !form.waterType.trim() || !form.tankSize) {
-      Alert.alert('Missing details', 'Please fill in the tank name, water type, and size.');
+    if (!form.tankName.trim() || !form.tankSize) {
+      Alert.alert('Missing details', 'Give your tank a name and a size.');
       return;
     }
-
     try {
       await createTank({
         user_id: currentUserId,
         tankName: form.tankName.trim(),
         tankImg: form.tankImg.trim(),
-        waterType: form.waterType.trim(),
+        waterType: form.waterType.trim() || 'Freshwater',
         tankSize: Number(form.tankSize),
         overview: '',
         aquaCare: {},
       });
-
       setIsAddModalVisible(false);
       resetForm();
       await loadTanks();
+      setActiveIndex(tanksRef.current.length - 1);
     } catch (error) {
-      Alert.alert('Tank create failed', error.message || 'Please try again.');
+      Alert.alert('Could not create tank', error.message || 'Please try again.');
     }
   };
 
+  const addButton = (
+    <HoldAction
+      onComplete={() => setIsAddModalVisible(true)}
+      tone="primary"
+      accessibilityLabel="Add a new tank"
+      style={styles.addBubble}
+      contentStyle={{ gap: 0 }}
+    >
+      <IconSymbol name="plus" size={26} color={Palette.text} />
+    </HoldAction>
+  );
+
   return (
-    <View style={styles.container} {...screenPanResponder.panHandlers}>
-      <WaterChangeToast />
-      <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
-      {tanks.length > 0 ? <ImageBackground source={tankImage} style={styles.backgroundImage} resizeMode="cover">
-        <View style={styles.overlayGradient} />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
 
-        <SafeAreaView style={styles.contentContainer}>
-          <View style={styles.topHeader}>
-            <Text style={styles.brandTitle}>AQUASTAINABLE</Text>
-            <View style={styles.pagePill}>
-              <Text style={styles.pagePillText}>
-                {String(currentNumber).padStart(2, '0')} / {Math.max(tanks.length || 1, 1)}
-              </Text>
-            </View>
-          </View>
+      {aquarium ? (
+        <GestureDetector gesture={tankSwipe}>
+          <View style={styles.flex}>
+            <Animated.View key={tankId} entering={FadeIn.duration(320)} style={StyleSheet.absoluteFill}>
+              <ImageBackground source={aquarium.tankImg ? { uri: aquarium.tankImg } : undefined} style={styles.flex} resizeMode="cover">
+                <Fade stops={[
+                  { offset: 0, color: '#05070A', opacity: 0.65 },
+                  { offset: 0.25, color: '#05070A', opacity: 0.05 },
+                  { offset: 0.5, color: '#05070A', opacity: 0.15 },
+                  { offset: 1, color: '#05070A', opacity: 0.96 },
+                ]} />
+              </ImageBackground>
+            </Animated.View>
 
-          <View style={styles.bottomSection}>
-            <View style={styles.statusBadgeContainer}>
-              <View style={[styles.statusDot, { backgroundColor: Colors.success }]} />
-              <Text style={styles.statusText}>{tanks.length > 0 ? 'Active' : 'No tank yet'}</Text>
-            </View>
-
-            <Text style={styles.aquariumTitle}>{aquarium?.tankName}</Text>
-
-            <View style={styles.metricsCarouselWrap}>
-              <FlatList
-                data={metricsData}
-                keyExtractor={(item) => item.id}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                snapToInterval={metricsStepWidth}
-                snapToAlignment="start"
-                decelerationRate="fast"
-                contentContainerStyle={styles.metricsListContent}
-                onMomentumScrollEnd={(event) => {
-                  const offsetX = event.nativeEvent.contentOffset.x;
-                  const nextIndex = Math.round(offsetX / metricsStepWidth);
-                  setActiveMetricIndex(Math.min(Math.max(nextIndex, 0), metricPageCount - 1));
-                }}
-                getItemLayout={(_, index) => ({
-                  length: metricsStepWidth,
-                  offset: metricsStepWidth * index,
-                  index,
-                })}
-                renderItem={({ item }) => (
-                  <View style={[styles.metricCard, { width: metricsCardWidth }]}>
-                    <View style={styles.metricCardGlow} />
-                    <Text style={styles.metricLabel}>{item.label}</Text>
-                    <Text style={[styles.metricValue, { color: item.accent }]}>{item.value}</Text>
+            <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
+              <View style={styles.topBar}>
+                <View style={styles.brandRow}>
+                  <Image source={require('../../assets/logo/Aque-logo.png')} style={styles.logo} resizeMode="contain" />
+                  <Text style={styles.brand}>Aquastainable</Text>
+                </View>
+                {tanks.length > 1 ? (
+                  <View style={styles.pager}>
+                    {tanks.map((tank, index) => (
+                      <View key={String(tank.tankId || tank.id)} style={[styles.pagerDot, index === activeIndex && styles.pagerDotActive]} />
+                    ))}
                   </View>
-                )}
-              />
-
-              <View style={styles.metricDots}>
-                {Array.from({ length: metricPageCount }).map((_, index) => (
-                  <View
-                    key={`metric-page-${index}`}
-                    style={[styles.metricDot, index === activeMetricIndex && styles.metricDotActive]}
-                  />
-                ))}
+                ) : null}
               </View>
-            </View>
 
-            {tanks.length > 0 && (
-              <SwipeButton onSwipe={() => router.push({ pathname: '/(tabs)/tank/[id]', params: { id: String(aquarium.tankId || aquarium.id) } })} />
-            )}
+              <View style={styles.flex} />
+
+              <Animated.View key={`sheet-${tankId}`} entering={FadeInDown.duration(360)} style={styles.sheet}>
+                <View style={styles.sheetHead}>
+                  <View style={[styles.statusPill, { backgroundColor: quality.soft }]}>
+                    <View style={[styles.statusDot, { backgroundColor: quality.color }]} />
+                    <Text style={[styles.statusText, { color: quality.color }]}>{quality.label}</Text>
+                  </View>
+                  {tanks.length > 1 ? <Text style={styles.counter}>{activeIndex + 1} of {tanks.length}</Text> : null}
+                </View>
+
+                <Text style={styles.tankName} numberOfLines={1}>{aquarium.tankName}</Text>
+                <Text style={styles.tankMeta}>{aquarium.waterType || 'Freshwater'} · {Number(aquarium.tankSize || 0)} L</Text>
+
+                <View style={styles.stats}>
+                  <Stat icon="thermometer" label="Temp" value={temp ? `${temp}°C` : '–'} />
+                  <Stat icon="drop.fill" label="pH" value={ph || '–'} />
+                  <Stat icon="clock" label="Last test" value={lastTestLabel(days)} warn={days === null || days > 7} />
+                </View>
+
+                {tip ? (
+                  <View style={styles.tip}>
+                    <IconSymbol name="sparkles" size={16} color={Palette.accent} />
+                    <Text style={styles.tipText} numberOfLines={2}>{tip}</Text>
+                  </View>
+                ) : null}
+
+                <View style={styles.actionsRow}>
+                  <SwipeToConfirm label="Swipe for details" onConfirm={openTank} tone="glass" style={styles.flex} />
+                  {addButton}
+                </View>
+
+                {tanks.length > 1 ? (
+                  <View style={styles.swipeHint}>
+                    <IconSymbol name="chevron.down" size={16} color={Palette.textFaint} style={{ transform: [{ rotate: '180deg' }] }} />
+                    <Text style={styles.swipeHintText}>Swipe up for your next tank</Text>
+                  </View>
+                ) : null}
+              </Animated.View>
+            </SafeAreaView>
           </View>
+        </GestureDetector>
+      ) : (
+        <SafeAreaView style={styles.empty}>
+          <View style={styles.emptyIcon}>
+            <Image source={require('../../assets/logo/Aque-logo.png')} style={{ width: 54, height: 54 }} resizeMode="contain" />
+          </View>
+          <Text style={styles.emptyTitle}>{loaded ? 'Add your first tank' : 'Loading your tanks…'}</Text>
+          <Text style={styles.emptyText}>
+            {loaded ? 'Snap a photo of your aquarium, give it a name and size, and we will help you look after it.' : 'One moment.'}
+          </Text>
+          {loaded ? (
+            <HoldAction
+              onComplete={() => setIsAddModalVisible(true)}
+              tone="primary"
+              label="Hold to add a tank"
+              icon={<IconSymbol name="plus" size={20} color={Palette.text} />}
+              style={{ alignSelf: 'stretch', minHeight: 56 }}
+            />
+          ) : null}
         </SafeAreaView>
-      </ImageBackground> : <SafeAreaView style={styles.emptyHome}><Text style={styles.emptyHomeText}>No tanks have been added yet.</Text></SafeAreaView>}
+      )}
 
-      <HoldButton
-        style={styles.fab}
-        onHold={() => setIsAddModalVisible(true)}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.fabText}>＋</Text>
-      </HoldButton>
+      <WaterChangeToast />
 
       <Modal visible={isAddModalVisible} transparent animationType="slide" onRequestClose={() => setIsAddModalVisible(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setIsAddModalVisible(false)}>
-          <Pressable style={styles.modalCard} onPress={() => {}}>
-            <Text style={styles.modalTitle}>Add new tank</Text>
-            <Text style={styles.fieldHeader}>Please add the details below</Text>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalWrap}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsAddModalVisible(false)} accessibilityLabel="Close" />
+          <View style={styles.modalCard}>
+            <View style={styles.grabber} />
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <Text style={styles.modalTitle}>New tank</Text>
+              <Text style={styles.modalSub}>Tap outside to close.</Text>
 
-            <Text style={styles.label}>Tank image</Text>
-            <View style={styles.imagePickerRow}>
-              <HoldButton style={styles.imagePickerButton} onHold={() => handlePickTankImage('library')}>
-                <Text style={styles.imagePickerButtonText}>Choose from gallery</Text>
-              </HoldButton>
-              <HoldButton style={styles.imagePickerButtonSecondary} onHold={() => handlePickTankImage('camera')}>
-                <Text style={styles.imagePickerButtonText}>Use camera</Text>
-              </HoldButton>
-            </View>
+              <Text style={styles.label}>Photo</Text>
+              {form.tankImg ? (
+                <Image source={{ uri: form.tankImg }} style={styles.preview} resizeMode="cover" />
+              ) : null}
+              <View style={styles.row}>
+                <HoldAction onComplete={() => handlePickTankImage('library')} label="Gallery" icon={<IconSymbol name="photo" size={18} color={Palette.text} />} style={styles.flex} />
+                <HoldAction onComplete={() => handlePickTankImage('camera')} label="Camera" icon={<IconSymbol name="camera" size={18} color={Palette.text} />} style={styles.flex} />
+              </View>
 
-            {form.tankImg ? (
-              <Image source={{ uri: form.tankImg }} style={styles.previewImage} resizeMode="cover" />
-            ) : null}
+              <Text style={styles.label}>Name</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. Guppy Kingdom"
+                placeholderTextColor={Palette.textFaint}
+                value={form.tankName}
+                onChangeText={(value) => setForm((prev) => ({ ...prev, tankName: value }))}
+              />
 
-            <Text style={styles.label}>Tank name</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter tank name"
-              placeholderTextColor="#8a8a8a"
-              value={form.tankName}
-              onChangeText={(value) => setForm((prev) => ({ ...prev, tankName: value }))}
-            />
+              <Text style={styles.label}>Size (litres)</Text>
+              <View style={styles.row}>
+                {SIZE_PRESETS.map((size) => (
+                  <Pressable key={size} onPress={() => setForm((prev) => ({ ...prev, tankSize: size }))} style={[styles.chip, form.tankSize === size && styles.chipActive]}>
+                    <Text style={[styles.chipText, form.tankSize === size && styles.chipTextActive]}>{size} L</Text>
+                  </Pressable>
+                ))}
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Or type a size"
+                keyboardType="numeric"
+                placeholderTextColor={Palette.textFaint}
+                value={form.tankSize}
+                onChangeText={(value) => setForm((prev) => ({ ...prev, tankSize: value.replace(/[^0-9.]/g, '') }))}
+              />
+              <Text style={styles.helper}>Freshwater only for now.</Text>
 
-            <Text style={styles.label}>Water type</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter water type"
-              placeholderTextColor="#8a8a8a"
-              value={form.waterType}
-              onChangeText={(value) => setForm((prev) => ({ ...prev, waterType: value }))}
-            />
-
-            <Text style={styles.label}>Tank size (litres)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter tank size in litres"
-              keyboardType="numeric"
-              placeholderTextColor="#8a8a8a"
-              value={form.tankSize}
-              onChangeText={(value) => setForm((prev) => ({ ...prev, tankSize: value }))}
-            />
-
-            <View style={styles.modalActions}>
-              <HoldButton style={styles.cancelButton} onHold={() => setIsAddModalVisible(false)}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </HoldButton>
-              <HoldButton style={styles.submitButton} onHold={handleCreateTank} disabled={loading}>
-                <Text style={styles.submitButtonText}>{loading ? 'Saving...' : 'Create tank'}</Text>
-              </HoldButton>
-            </View>
-          </Pressable>
-        </Pressable>
+              <HoldAction
+                onComplete={handleCreateTank}
+                disabled={loading}
+                tone="primary"
+                label={loading ? 'Saving…' : 'Hold to create tank'}
+                icon={<IconSymbol name="checkmark" size={18} color={Palette.text} />}
+                style={{ marginTop: 22, minHeight: 56 }}
+              />
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
 }
 
+function Stat({ icon, label, value, warn }: { icon: string; label: string; value: string; warn?: boolean }) {
+  return (
+    <View style={styles.stat}>
+      <IconSymbol name={icon as any} size={16} color={warn ? Palette.warning : Palette.mist} />
+      <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  backgroundImage: {
-    width: '100%',
-    height: '100%',
-  },
-  overlayGradient: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(22, 21, 26, 0.55)',
-  },
-  contentContainer: {
-    flex: 1,
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 40,
-    paddingBottom: 30,
-  },
-  emptyHome: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.background,
-  },
-  emptyHomeText: {
-    color: Colors.white,
-    fontSize: 16,
-  },
-  topHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  brandTitle: {
-    color: Colors.white,
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 2,
-  },
-  pagePill: {
-    backgroundColor: 'rgba(18, 18, 18, 0.75)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  pagePillText: {
-    color: Colors.lightBlue,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  bottomSection: {
-    marginBottom: 20,
-  },
-  statusBadgeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(18, 18, 18, 0.8)',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  statusText: {
-    color: Colors.white,
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  aquariumTitle: {
-    color: Colors.white,
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 20,
-    letterSpacing: 0.5,
-  },
-  metricsCarouselWrap: {
-    marginBottom: 20,
-  },
-  metricsListContent: {
-    paddingHorizontal: 0,
-  },
-  metricCard: {
-    height: 76,
-    backgroundColor: Colors.background,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 16,
-    marginRight: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.24,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  metricCardGlow: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'transparent',
-  },
-  metricLabel: {
-    color: Colors.gray,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  metricValue: {
-    color: Colors.white,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  metricDots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
-  metricDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    marginHorizontal: 3,
-  },
-  metricDotActive: {
-    width: 18,
-    backgroundColor: Colors.lightBlue,
-    borderRadius: 999,
-  },
-  swipeTrack: {
-    height: 60,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: 30,
-    justifyContent: 'center',
-    padding: SWIPE_PADDING,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.18)',
-    overflow: 'hidden',
-  },
-  swipeText: {
-    position: 'absolute',
-    alignSelf: 'center',
-    color: Colors.white,
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 1.5,
-  },
-  swipeThumb: {
-    width: SWIPE_THUMB_SIZE,
-    height: SWIPE_THUMB_SIZE,
-    borderRadius: SWIPE_THUMB_SIZE / 2,
-    backgroundColor: Colors.info || '#3B82F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  swipeIcon: {
-    textAlign: 'center',
-    includeFontPadding: false,
-  },
-  fab: {
-    position: 'absolute',
-    right: 22,
-    bottom: 30,
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    backgroundColor: Colors.lightBlue,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.28,
-    shadowRadius: 10,
-  },
-  fabText: {
-    color: Colors.white,
-    fontSize: 36,
-    fontWeight: '600',
-    marginTop: -4,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalCard: {
-    backgroundColor: '#1b1d25',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-    paddingBottom: 30,
-  },
-  modalTitle: {
-    color: Colors.white,
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  fieldHeader: {
-    color: '#c7d4ff',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 18,
-  },
-  label: {
-    color: '#dfe7ff',
-    fontSize: 12,
-    fontWeight: '700',
-    marginBottom: 8,
-    letterSpacing: 0.4,
-  },
-  input: {
-    backgroundColor: '#2a2e39',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: Colors.white,
-    marginBottom: 12,
-    fontSize: 15,
-  },
-  imagePickerRow: {
-    flexDirection: 'row',
-    marginBottom: 12,
-    gap: 8,
-  },
-  imagePickerButton: {
-    flex: 1,
-    backgroundColor: '#2a7dff',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  imagePickerButtonSecondary: {
-    flex: 1,
-    backgroundColor: '#3c4658',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  imagePickerButtonText: {
-    color: Colors.white,
-    fontWeight: '700',
-  },
-  previewImage: {
-    width: '100%',
-    height: 160,
-    borderRadius: 14,
-    marginBottom: 12,
-    backgroundColor: '#2a2e39',
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: '#2c313d',
-    borderRadius: 12,
-    paddingVertical: 12,
-    marginRight: 8,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    color: Colors.white,
-    fontWeight: '600',
-  },
-  submitButton: {
-    flex: 1,
-    backgroundColor: Colors.lightBlue,
-    borderRadius: 12,
-    paddingVertical: 12,
-    marginLeft: 8,
-    alignItems: 'center',
-  },
-  submitButtonText: {
-    color: Colors.white,
-    fontWeight: '700',
-  },
+  flex: { flex: 1 },
+  container: { flex: 1, backgroundColor: Palette.background },
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 22, paddingTop: 8 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  logo: { width: 26, height: 26 },
+  brand: { color: Palette.text, fontSize: 16, fontFamily: 'Montserrat_700Bold', letterSpacing: 0.4 },
+  pager: { gap: 6, alignItems: 'center' },
+  pagerDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.35)' },
+  pagerDotActive: { height: 18, backgroundColor: Palette.text },
+
+  sheet: { marginHorizontal: 14, marginBottom: 10, padding: 18, borderRadius: 28, backgroundColor: 'rgba(16,18,23,0.82)', borderWidth: 1, borderColor: Palette.border },
+  sheetHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  statusPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
+  statusDot: { width: 7, height: 7, borderRadius: 4 },
+  statusText: { fontSize: 12, fontFamily: 'Montserrat_700Bold' },
+  counter: { color: Palette.textFaint, fontSize: 12, fontFamily: 'Montserrat_600SemiBold' },
+  tankName: { color: Palette.text, fontSize: 30, fontFamily: 'Montserrat_700Bold' },
+  tankMeta: { color: Palette.textMuted, fontSize: 14, marginTop: 2 },
+
+  stats: { flexDirection: 'row', gap: 8, marginTop: 16 },
+  stat: { flex: 1, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 16, paddingVertical: 12, paddingHorizontal: 10, gap: 4, borderWidth: 1, borderColor: Palette.border },
+  statValue: { color: Palette.text, fontSize: 16, fontFamily: 'Montserrat_700Bold' },
+  statLabel: { color: Palette.textFaint, fontSize: 11, fontFamily: 'Montserrat_600SemiBold' },
+
+  tip: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', marginTop: 12, padding: 12, borderRadius: 16, backgroundColor: Palette.accentSoft },
+  tipText: { flex: 1, color: Palette.text, fontSize: 13, lineHeight: 19 },
+
+  actionsRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16 },
+  addBubble: { width: 60, height: 60, borderRadius: 30, paddingHorizontal: 0 },
+  swipeHint: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12 },
+  swipeHintText: { color: Palette.textFaint, fontSize: 12 },
+
+  empty: { flex: 1, justifyContent: 'center', paddingHorizontal: 28, gap: 14 },
+  emptyIcon: { width: 88, height: 88, borderRadius: 44, backgroundColor: Palette.primarySoft, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  emptyTitle: { color: Palette.text, fontSize: 28, fontFamily: 'Montserrat_700Bold' },
+  emptyText: { color: Palette.textMuted, fontSize: 15, lineHeight: 22, marginBottom: 12 },
+
+  modalWrap: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(5,7,10,0.6)' },
+  modalCard: { maxHeight: '88%', backgroundColor: Palette.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingBottom: 30, borderWidth: 1, borderColor: Palette.border },
+  grabber: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: Palette.borderStrong, marginVertical: 10 },
+  modalTitle: { color: Palette.text, fontSize: 24, fontFamily: 'Montserrat_700Bold', marginTop: 4 },
+  modalSub: { color: Palette.textFaint, fontSize: 13, marginTop: 4, marginBottom: 8 },
+  label: { color: Palette.textMuted, fontSize: 13, fontFamily: 'Montserrat_600SemiBold', marginTop: 16, marginBottom: 8 },
+  row: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  preview: { width: '100%', height: 150, borderRadius: 18, marginBottom: 10 },
+  input: { height: 52, borderRadius: 16, paddingHorizontal: 16, color: Palette.text, fontSize: 15, backgroundColor: Palette.surfaceRaised, borderWidth: 1, borderColor: Palette.border, marginTop: 4 },
+  chip: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 999, backgroundColor: Palette.surfaceRaised, borderWidth: 1, borderColor: Palette.border },
+  chipActive: { backgroundColor: Palette.primarySoft, borderColor: Palette.primaryBorder },
+  chipText: { color: Palette.textMuted, fontSize: 13, fontFamily: 'Montserrat_600SemiBold' },
+  chipTextActive: { color: Palette.text },
+  helper: { color: Palette.textFaint, fontSize: 12, marginTop: 8 },
 });

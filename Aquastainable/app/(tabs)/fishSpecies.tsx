@@ -89,7 +89,7 @@ export default function FishSpeciesScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Fish Species</Text>
-        <Text style={styles.subtitle}>Browse the fish currently in your tanks.</Text>
+        <Text style={styles.subtitle}>Your fish, tank by tank. Press and hold Edit or Delete to use them.</Text>
       </View>
 
       <FlatList
@@ -115,9 +115,7 @@ export default function FishSpeciesScreen() {
                 <View style={styles.infoRow}>
                   <Text style={styles.label}>Tank</Text>
                   <Text style={[styles.value, styles.compactValue]} numberOfLines={1}>
-                    {(item.tankName || 'Unnamed tank').length > 10
-                      ? `${(item.tankName || 'Unnamed tank').slice(0, 10)}...`
-                      : item.tankName || 'Unnamed tank'}
+                    {item.tankName || 'Unnamed tank'}
                   </Text>
                 </View>
                 <View style={styles.infoRow}>
@@ -129,8 +127,8 @@ export default function FishSpeciesScreen() {
               </View>
               </TouchableOpacity>
               <View style={styles.actionRow}>
-                <HoldActionButton label="Hold to edit" onHold={() => openFishEditor(item)} fillColor="#2E8CA6" />
-                <HoldActionButton label="Hold to delete" onHold={() => { void deleteFish(item); }} fillColor="#B83A45" style={styles.deleteAction} />
+                <HoldActionButton label="Edit" onHold={() => openFishEditor(item)} fillColor="#2E8CA6" />
+                <HoldActionButton label="Delete" onHold={() => { void deleteFish(item); }} fillColor="#B83A45" style={styles.deleteAction} />
               </View>
             </View>
           );

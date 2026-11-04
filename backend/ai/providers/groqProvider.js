@@ -18,7 +18,7 @@ function ensureConfigured() {
   }
 }
 
-async function generate({ prompt, system, format, history = [], maxTokens }) {
+async function generate({ prompt, system, format, history = [], maxTokens, temperature = 0.2, reasoningEffort }) {
   ensureConfigured();
 
   const response = await axios.post(
@@ -30,8 +30,10 @@ async function generate({ prompt, system, format, history = [], maxTokens }) {
         ...history.filter((message) => message && (message.role === 'user' || message.role === 'assistant')),
         { role: 'user', content: prompt },
       ],
-      temperature: 0.2,
+      temperature,
       ...(maxTokens ? { max_tokens: maxTokens } : {}),
+      // gpt-oss models think before answering; 'low' keeps chat replies fast.
+      ...(reasoningEffort && /gpt-oss/.test(config.model) ? { reasoning_effort: reasoningEffort } : {}),
       ...(format === 'json' ? { response_format: { type: 'json_object' } } : {}),
     },
     { headers: getHeaders(), timeout: config.timeoutMs }

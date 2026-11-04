@@ -19,7 +19,7 @@ const app = initializeApp(firebaseConfig);
 
 let analytics = null;
 
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && process.env.EXPO_PUBLIC_DEMO !== '1') {
   isSupported().then((supported) => {
     if (supported) {
       analytics = getAnalytics(app);

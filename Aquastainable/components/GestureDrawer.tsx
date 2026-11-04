@@ -1,133 +1,68 @@
-import React, { useEffect, useRef, useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  Dimensions,
-  TouchableOpacity,
-  Image,
-  Animated,
-  PanResponder,
-} from 'react-native';
-import { useRouter, usePathname } from 'expo-router';
+// Side drawer, opened by swiping in from the left edge (no menu button).
+// Rebuilt on Gesture Handler + Reanimated: the drag runs on the UI thread with a
+// shared value, so the screen no longer re-renders on every frame of the drag.
+import { usePathname, useRouter } from 'expo-router';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
+import React, { useEffect, useState } from 'react';
+import { Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+
+import HoldAction from '@/components/gestures/HoldAction';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
+import { Palette } from '@/constants/palette';
 import { auth } from '@/firebase';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const DRAWER_WIDTH = SCREEN_WIDTH * 0.78;
+const EDGE_WIDTH = 22; // invisible strip on the left edge that starts the swipe
+const SPRING = { damping: 22, stiffness: 220, mass: 0.9 };
 
-interface GestureDrawerProps {
-  children: React.ReactNode;
-}
+const NAV_ITEMS = [
+  { icon: 'house.fill', label: 'Dashboard & Tanks', path: '/(tabs)/home', match: 'home' },
+  { icon: 'fish.fill', label: 'Fish Species', path: '/(tabs)/fishSpecies', match: 'fishSpecies' },
+  { icon: 'leaf.fill', label: 'Plant Species', path: '/(tabs)/plantSpecies', match: 'plantSpecies' },
+  { icon: 'drop.fill', label: 'Water Test', path: '/(tabs)/waterTest', match: 'waterTest' },
+  { icon: 'sparkles', label: 'Fish Assistant', path: '/(tabs)/AskAIScreen', match: 'AskAIScreen' },
+] as const;
 
-export function GestureDrawer({ children }: GestureDrawerProps) {
+export function GestureDrawer({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const currentPath = usePathname();
-  const [drawerPosition, setDrawerPosition] = useState(-DRAWER_WIDTH);
+  const { width } = useWindowDimensions();
+  const drawerWidth = Math.min(340, width * 0.8);
   const [user, setUser] = useState<User | null>(null);
-  const dragStartPosition = useRef(-DRAWER_WIDTH);
-  const drawerPositionRef = useRef(-DRAWER_WIDTH);
-  const isDraggingRef = useRef(false);
-  const logoutHoldProgress = useRef(new Animated.Value(0)).current;
-  const logoutHoldTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => {
-      unsubscribe();
-      if (logoutHoldTimer.current) {
-        clearTimeout(logoutHoldTimer.current);
-      }
-    };
-  }, []);
+  // 0 = closed, 1 = open
+  const position = useSharedValue(0);
+  const startPosition = useSharedValue(0);
 
-  const openDrawer = () => {
-    drawerPositionRef.current = 0;
-    setDrawerPosition(0);
-  };
-  const closeDrawer = () => {
-    drawerPositionRef.current = -DRAWER_WIDTH;
-    setDrawerPosition(-DRAWER_WIDTH);
+  useEffect(() => onAuthStateChanged(auth, setUser), []);
+
+  const settle = (toOpen: boolean) => {
+    'worklet';
+    position.value = withSpring(toOpen ? 1 : 0, SPRING);
+    runOnJS(setOpen)(toOpen);
   };
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) =>
-        Math.abs(gestureState.dx) > 8 || Math.abs(gestureState.dy) > 8,
-      onPanResponderGrant: () => {
-        isDraggingRef.current = true;
-        dragStartPosition.current = drawerPositionRef.current;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        if (!isDraggingRef.current) {
-          return;
-        }
-
-        const nextPosition = Math.min(0, Math.max(-DRAWER_WIDTH, dragStartPosition.current + gestureState.dx));
-        drawerPositionRef.current = nextPosition;
-        setDrawerPosition(nextPosition);
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        isDraggingRef.current = false;
-
-        const dragDistance = gestureState.dx;
-        const shouldOpen = dragDistance > DRAWER_WIDTH * 0.3 || gestureState.vx > 0.25;
-        if (shouldOpen || drawerPositionRef.current > -DRAWER_WIDTH * 0.5) {
-          openDrawer();
-        } else {
-          closeDrawer();
-        }
-      },
-      onPanResponderTerminate: () => {
-        isDraggingRef.current = false;
-        if (drawerPositionRef.current > -DRAWER_WIDTH * 0.5) {
-          openDrawer();
-        } else {
-          closeDrawer();
-        }
-      },
+  const pan = Gesture.Pan()
+    .activeOffsetX([-12, 12])
+    .failOffsetY([-14, 14])
+    .onBegin(() => {
+      startPosition.value = position.value;
     })
-  ).current;
+    .onUpdate((event) => {
+      const next = startPosition.value + event.translationX / drawerWidth;
+      position.value = Math.min(1, Math.max(0, next));
+    })
+    .onEnd((event) => {
+      const flungOpen = event.velocityX > 500;
+      const flungClosed = event.velocityX < -500;
+      settle(flungOpen || (!flungClosed && position.value > 0.4));
+    });
 
-  const drawerAnimatedStyle = {
-    transform: [{ translateX: drawerPosition }],
-  };
-  const backdropOpacity = Math.min(0.65, Math.max(0, (drawerPosition + DRAWER_WIDTH) / DRAWER_WIDTH));
-  const handleOpacity = Math.max(0, Math.min(1, 1 - (drawerPosition + DRAWER_WIDTH + 10) / 40));
-  const pointerEvents = drawerPosition > -DRAWER_WIDTH + 10 ? 'auto' : 'none';
-  const userName = user?.displayName?.trim() || user?.email?.split('@')[0] || 'User';
-  const userInitials = userName
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0].toUpperCase())
-    .join('');
-
-  const startLogoutHold = () => {
-    logoutHoldProgress.setValue(0);
-    Animated.timing(logoutHoldProgress, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: false,
-    }).start();
-    logoutHoldTimer.current = setTimeout(async () => {
-      logoutHoldTimer.current = null;
-      await signOut(auth);
-      closeDrawer();
-      router.replace('/signin');
-    }, 500);
-  };
-
-  const cancelLogoutHold = () => {
-    if (logoutHoldTimer.current) {
-      clearTimeout(logoutHoldTimer.current);
-      logoutHoldTimer.current = null;
-    }
-    logoutHoldProgress.stopAnimation();
-    logoutHoldProgress.setValue(0);
+  const closeDrawer = () => {
+    position.value = withTiming(0, { duration: 200 });
+    setOpen(false);
   };
 
   const navigateTo = (path: string) => {
@@ -135,300 +70,111 @@ export function GestureDrawer({ children }: GestureDrawerProps) {
     router.push(path as any);
   };
 
+  const logout = async () => {
+    await signOut(auth);
+    closeDrawer();
+    router.replace('/signin');
+  };
+
+  const panelStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: interpolate(position.value, [0, 1], [-drawerWidth - 8, 0]) }],
+  }));
+  const backdropStyle = useAnimatedStyle(() => ({ opacity: interpolate(position.value, [0, 1], [0, 0.7]) }));
+  const handleStyle = useAnimatedStyle(() => ({ opacity: interpolate(position.value, [0, 0.2], [1, 0]) }));
+
+  const userName = user?.displayName?.trim() || user?.email?.split('@')[0] || 'Fishkeeper';
+  const initials = userName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('');
+
   return (
     <View style={styles.container}>
       <View style={styles.mainContent}>{children}</View>
 
-      <Animated.View style={[styles.backdrop, { opacity: backdropOpacity, pointerEvents, backgroundColor: 'rgba(17, 24, 28, 0.72)' }]}>
-        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={closeDrawer} />
+      <Animated.View pointerEvents={open ? 'auto' : 'none'} style={[styles.backdrop, backdropStyle]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={closeDrawer} accessibilityLabel="Close menu" />
       </Animated.View>
 
-      <Animated.View style={[styles.drawerPanel, drawerAnimatedStyle]}>
-        <Animated.View style={[styles.pullHandleContainer, { opacity: handleOpacity }]} {...panResponder.panHandlers}>
-          <View style={styles.pullHandlePill} />
-        </Animated.View>
+      {/* Edge strip: only this area starts the swipe, so scrolling and carousels keep working. */}
+      {!open ? (
+        <GestureDetector gesture={pan}>
+          <Animated.View style={[styles.edge, handleStyle]} accessibilityLabel="Swipe right to open the menu">
+            <View style={styles.edgePill} />
+          </Animated.View>
+        </GestureDetector>
+      ) : null}
 
-        <View style={styles.drawerInnerContent}>
-          <View style={styles.profileSection}>
-            {user?.photoURL ? <Image source={{ uri: user.photoURL }} style={styles.avatar} /> : <View style={styles.avatarFallback}><Text style={styles.avatarInitials}>{userInitials}</Text></View>}
-            <View style={styles.profileTextContainer}>
-              <Text style={styles.userName}>{userName}</Text>
-              <Text style={styles.userRole}>{user?.email || 'Account'}</Text>
+      <GestureDetector gesture={pan}>
+        <Animated.View style={[styles.panel, { width: drawerWidth }, panelStyle]}>
+          <View style={styles.profile}>
+            {user?.photoURL ? (
+              <Image source={{ uri: user.photoURL }} style={styles.avatar} />
+            ) : (
+              <View style={[styles.avatar, styles.avatarFallback]}><Text style={styles.initials}>{initials}</Text></View>
+            )}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.userName} numberOfLines={1}>{userName}</Text>
+              <Text style={styles.userEmail} numberOfLines={1}>{user?.email || 'Account'}</Text>
             </View>
           </View>
 
-          <View style={styles.divider} />
-
-          <View style={styles.navSection}>
-            <DrawerItem
-              icon="house.fill"
-              label="Dashboard & Tanks"
-              isActive={currentPath.includes('home')}
-              onPress={() => navigateTo('/(tabs)/home')}
-            />
-            <DrawerItem
-              icon="fish.fill"
-              label="Fish Species"
-              isActive={currentPath.includes('fishSpecies')}
-              onPress={() => navigateTo('/(tabs)/fishSpecies')}
-            />
-            <DrawerItem
-              icon="leaf.fill"
-              label="Plant Species"
-              isActive={currentPath.includes('plantSpecies')}
-              onPress={() => navigateTo('/(tabs)/plantSpecies')}
-            />
-            <DrawerItem
-              icon="drop.fill"
-              label="Water Test"
-              isActive={currentPath.includes('waterTest')}
-              onPress={() => navigateTo('/(tabs)/waterTest')}
-            />
-            <DrawerItem
-              icon="sparkles"
-              label="AI Assistant"
-              isActive={currentPath.includes('AskAIScreen')}
-              onPress={() => navigateTo('/(tabs)/AskAIScreen')}
-            />
+          <Text style={styles.sectionLabel}>Menu</Text>
+          <View style={{ gap: 6 }}>
+            {NAV_ITEMS.map((item) => {
+              const active = currentPath.includes(item.match);
+              return (
+                <HoldAction
+                  key={item.path}
+                  onComplete={() => navigateTo(item.path)}
+                  tone={active ? 'primary' : 'ghost'}
+                  accessibilityLabel={`Open ${item.label}`}
+                  style={styles.navItem}
+                  contentStyle={styles.navContent}
+                >
+                  <IconSymbol size={20} name={item.icon as any} color={active ? Palette.primaryBright : Palette.textMuted} />
+                  <Text style={[styles.navLabel, active && styles.navLabelActive]}>{item.label}</Text>
+                </HoldAction>
+              );
+            })}
           </View>
 
-          <View style={styles.footerSection}>
-            <View style={styles.divider} />
-            <HoldLogoutItem onPressIn={startLogoutHold} onPressOut={cancelLogoutHold} progress={logoutHoldProgress} />
+          <View style={styles.footer}>
+            <Text style={styles.tip}>Tip: press and hold anything to use it. Swipe left to close.</Text>
+            <HoldAction
+              onComplete={logout}
+              tone="danger"
+              speed="confirm"
+              label="Hold to log out"
+              icon={<IconSymbol size={18} name="rectangle.portrait.and.arrow.right" color={Palette.dangerText} />}
+            />
           </View>
-        </View>
-      </Animated.View>
+        </Animated.View>
+      </GestureDetector>
     </View>
   );
 }
 
-function HoldLogoutItem({ onPressIn, onPressOut, progress }: { onPressIn: () => void; onPressOut: () => void; progress: Animated.Value }) {
-  const fillWidth = progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
-
-  return (
-    <TouchableOpacity
-      style={styles.logoutItem}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
-      activeOpacity={0.85}
-      accessibilityLabel="Hold to log out"
-    >
-      <Animated.View style={[styles.logoutFill, { width: fillWidth }]} />
-      <IconSymbol size={22} name="rectangle.portrait.and.arrow.right" color="#FFFFFF" />
-      <Text style={styles.logoutLabel}>Hold to log out</Text>
-    </TouchableOpacity>
-  );
-}
-
-// --- Sub-component for Menu Rows ---
-function DrawerItem({
-  icon,
-  label,
-  isActive,
-  onPress,
-}: {
-  icon: string;
-  label: string;
-  isActive: boolean;
-  onPress: () => void;
-}) {
-  const holdProgress = useRef(new Animated.Value(0)).current;
-  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => () => {
-    if (holdTimer.current) {
-      clearTimeout(holdTimer.current);
-    }
-  }, []);
-
-  const startHold = () => {
-    holdProgress.setValue(0);
-    Animated.timing(holdProgress, { toValue: 1, duration: 500, useNativeDriver: false }).start();
-    holdTimer.current = setTimeout(() => {
-      holdTimer.current = null;
-      onPress();
-    }, 500);
-  };
-
-  const cancelHold = () => {
-    if (holdTimer.current) {
-      clearTimeout(holdTimer.current);
-      holdTimer.current = null;
-    }
-    holdProgress.stopAnimation();
-    holdProgress.setValue(0);
-  };
-
-  const holdFillWidth = holdProgress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
-
-  return (
-    <TouchableOpacity
-      style={[styles.itemContainer, isActive && styles.activeItemContainer]}
-      onPressIn={startHold}
-      onPressOut={cancelHold}
-      activeOpacity={0.7}
-      accessibilityLabel={`Hold to open ${label}`}
-    >
-      <Animated.View style={[styles.itemHoldFill, { width: holdFillWidth }]} />
-      <IconSymbol
-        size={22}
-        name={icon as any}
-        color="#FFFFFF"
-      />
-      <Text style={[styles.itemLabel, isActive && styles.activeItemLabel]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
+  container: { flex: 1, backgroundColor: Palette.background },
+  mainContent: { flex: 1 },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: '#05070A', zIndex: 99 },
+  edge: { position: 'absolute', left: 0, top: 0, bottom: 0, width: EDGE_WIDTH, zIndex: 98, justifyContent: 'center' },
+  edgePill: { width: 4, height: 44, borderTopRightRadius: 3, borderBottomRightRadius: 3, backgroundColor: Palette.primary, opacity: 0.8 },
+  panel: {
+    position: 'absolute', top: 0, bottom: 0, left: 0, zIndex: 100,
+    backgroundColor: Palette.surface, borderRightWidth: 1, borderRightColor: Palette.border,
+    paddingTop: 64, paddingHorizontal: 18, paddingBottom: 28,
+    shadowColor: '#000', shadowOffset: { width: 6, height: 0 }, shadowOpacity: 0.45, shadowRadius: 18, elevation: 16,
   },
-  mainContent: {
-    flex: 1,
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(17, 24, 28, 0.72)',
-    zIndex: 99,
-  },
-  drawerPanel: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    width: DRAWER_WIDTH,
-    backgroundColor: Colors.dark.background,
-    zIndex: 100,
-    borderRightWidth: 1,
-    borderRightColor: 'rgba(255, 255, 255, 0.08)',
-    elevation: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 4, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-  },
-  pullHandleContainer: {
-    position: 'absolute',
-    right: -24,
-    top: '42%',
-    width: 24,
-    height: 70,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  pullHandlePill: {
-    width: 5,
-    height: 48,
-    borderRadius: 3,
-    backgroundColor: Colors.light.tint,
-  },
-  drawerInnerContent: {
-    flex: 1,
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 30,
-    justify: 'space-between',
-  },
-  profileSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 2,
-    borderColor: Colors.primary,
-  },
-  avatarFallback: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 2,
-    borderColor: Colors.primary,
-    backgroundColor: '#2E8CA6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarInitials: {
-    color: Colors.white,
-    fontSize: 17,
-    fontWeight: '800',
-  },
-  profileTextContainer: {
-    marginLeft: 14,
-  },
-  userName: {
-    color: Colors.dark.text,
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  userRole: {
-    color: Colors.dark.icon,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    marginVertical: 18,
-  },
-  navSection: {
-    flex: 1,
-  },
-  itemContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    marginBottom: 8,
-  },
-  activeItemContainer: {
-    backgroundColor: 'rgba(46, 140, 166, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(46, 140, 166, 0.3)',
-  },
-  itemLabel: {
-    color: Colors.dark.icon,
-    fontSize: 15,
-    fontWeight: '600',
-    marginLeft: 14,
-  },
-  activeItemLabel: {
-    color: Colors.dark.text,
-    fontWeight: '700',
-  },
-  itemHoldFill: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(46, 140, 166, 0.22)',
-  },
-  footerSection: {
-    marginTop: 'auto',
-  },
-  logoutItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    overflow: 'hidden',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-  },
-  logoutFill: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(46, 140, 166, 0.3)',
-  },
-  logoutLabel: {
-    color: Colors.dark.text,
-    fontSize: 15,
-    fontWeight: '700',
-    marginLeft: 14,
-  },
+  profile: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingBottom: 22, borderBottomWidth: 1, borderBottomColor: Palette.border, marginBottom: 18 },
+  avatar: { width: 48, height: 48, borderRadius: 24, borderWidth: 2, borderColor: Palette.primaryBorder },
+  avatarFallback: { backgroundColor: Palette.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  initials: { color: Palette.text, fontSize: 16, fontFamily: 'Montserrat_700Bold' },
+  userName: { color: Palette.text, fontSize: 16, fontFamily: 'Montserrat_700Bold' },
+  userEmail: { color: Palette.textMuted, fontSize: 12, marginTop: 2 },
+  sectionLabel: { color: Palette.textFaint, fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 10, fontFamily: 'Montserrat_600SemiBold' },
+  navItem: { borderRadius: 16, minHeight: 50, paddingHorizontal: 14 },
+  navContent: { justifyContent: 'flex-start', gap: 14 },
+  navLabel: { color: Palette.textMuted, fontSize: 15, fontFamily: 'Montserrat_600SemiBold' },
+  navLabelActive: { color: Palette.text },
+  footer: { marginTop: 'auto', gap: 14 },
+  tip: { color: Palette.textFaint, fontSize: 12, lineHeight: 17 },
 });

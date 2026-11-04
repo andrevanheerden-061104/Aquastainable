@@ -23,6 +23,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import * as ImagePicker from 'expo-image-picker';
 
 import HeaderRow from '@/components/tank/HeaderRow';
+import HoldAction from '@/components/gestures/HoldAction';
 import OverviewSection from '@/components/tank/OverviewSection';
 import NeedToKnow from '@/components/tank/NeedToKnow';
 import FishPlants from '@/components/tank/FishPlants';
@@ -43,28 +44,18 @@ const TILE_GAP = 16;
 const TILE_WIDTH = (SCREEN_WIDTH - 40 - TILE_GAP) / 2;
 const TILE_HEIGHT = 250;
 
+// Uses the shared HoldAction gesture (save = quick hold, delete = longer confirm hold).
 function HoldActionButton({ style, onHold, disabled, fillColor, text }: { style: object; onHold: () => void; disabled: boolean; fillColor: string; text: string }) {
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const progress = useRef(new Animated.Value(0)).current;
-
-  const start = () => {
-    if (disabled) return;
-    progress.setValue(0);
-    Animated.timing(progress, { toValue: 1, duration: 500, useNativeDriver: false }).start();
-    timer.current = setTimeout(onHold, 500);
-  };
-
-  const cancel = () => {
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = null;
-    Animated.timing(progress, { toValue: 0, duration: 100, useNativeDriver: false }).start();
-  };
-
+  const danger = /delete/i.test(text) || fillColor === '#B83A45';
   return (
-    <TouchableOpacity style={[style, disabled && styles.disabledButton]} onPressIn={start} onPressOut={cancel} onPress={cancel} disabled={disabled} activeOpacity={0.8}>
-      <Animated.View pointerEvents="none" style={[styles.holdActionFill, { backgroundColor: fillColor, transform: [{ scaleX: progress }] }]} />
-      <Text style={styles.saveEditText}>{text}</Text>
-    </TouchableOpacity>
+    <HoldAction
+      onComplete={onHold}
+      disabled={disabled}
+      tone={danger ? 'danger' : 'primary'}
+      speed={danger ? 'confirm' : 'quick'}
+      label={text}
+      style={[style, { backgroundColor: undefined }]}
+    />
   );
 }
 

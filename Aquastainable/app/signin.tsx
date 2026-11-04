@@ -1,8 +1,11 @@
-﻿import { Link, useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Image, Keyboard, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import SwipeToConfirm from '@/components/gestures/SwipeToConfirm';
+
 import Colors from './colors';
+import { OTP_ENABLED } from './hooks/authHeader';
 import { useAuthApi } from './hooks/useAuthApi';
 
 const heroImage = require('../assets/logo/Fish.jpeg');
@@ -33,7 +36,8 @@ export default function SignInScreen() {
         email: email.trim(),
         password,
       });
-      router.replace('/loading');
+      // With 2FA on, go to the 6-digit code screen first.
+      router.replace(OTP_ENABLED ? '/verify' : '/loading');
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Unable to sign in.');
     }
@@ -54,7 +58,7 @@ export default function SignInScreen() {
 
       <View style={styles.content}>
         <Text style={styles.title}>Welcome back</Text>
-        <Text style={styles.subtitle}>Sign in to continue managing your aquarium and plants.</Text>
+        <Text style={styles.subtitle}>Sign in to look after your tanks, fish and plants.</Text>
 
         <View style={styles.form}>
           {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
@@ -62,6 +66,8 @@ export default function SignInScreen() {
             value={email}
             onChangeText={setEmail}
             placeholder="Email address"
+            textContentType="emailAddress"
+            autoComplete="email"
             placeholderTextColor={Colors.gray}
             style={styles.input}
             keyboardType="email-address"
@@ -84,9 +90,7 @@ export default function SignInScreen() {
             </Pressable>
           </View>
 
-          <Pressable style={styles.primaryButton} onPress={handleSignIn} disabled={loading}>
-            <Text style={styles.primaryButtonText}>{loading ? 'Signing in...' : 'Continue with Email'}</Text>
-          </Pressable>
+          <SwipeToConfirm label="Swipe to sign in" onConfirm={handleSignIn} loading={loading} style={styles.swipe} />
 
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Don't have an account?</Text>
@@ -145,6 +149,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
+  },
+  swipe: {
+    marginTop: 8,
   },
   primaryButton: {
     width: '100%',

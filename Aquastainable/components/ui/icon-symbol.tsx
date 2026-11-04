@@ -24,6 +24,23 @@ const MAPPING = {
   pencil: 'edit',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
+  'chevron.down': 'expand-more',
+  plus: 'add',
+  trash: 'delete-outline',
+  xmark: 'close',
+  'arrow.up': 'arrow-upward',
+  'arrow.clockwise': 'refresh',
+  clock: 'history',
+  checkmark: 'check',
+  'exclamationmark.triangle': 'warning-amber',
+  lock: 'lock-outline',
+  envelope: 'mail-outline',
+  camera: 'photo-camera',
+  photo: 'image',
+  thermometer: 'device-thermostat',
+  'line.3.horizontal': 'menu',
+  'square.and.pencil': 'edit-note',
+  'hand.tap': 'touch-app',
 } as IconMapping;
 
 /**

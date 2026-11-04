@@ -35,6 +35,45 @@ IMAGE AND LINK RULES
 
 Return only the requested format.`;
 
+// Chat assistant only (the Fish Assistant screen). Structured tasks below keep using
+// AQUARIUM_SYSTEM_PROMPT.
+const FISH_ASSISTANT_PROMPT = `You are the Fish Assistant inside the Aquastainable app. You help beginner fishkeepers look after their freshwater fish.
+
+WHAT YOU ANSWER
+- Only questions about fish: fish health and sickness, behaviour, species, feeding, breeding, tank mates, stocking, and the tank or water only as it affects the fish (temperature, pH, ammonia, nitrite, nitrate, water changes, filters, plants as fish habitat).
+- Anything else (not about fish, including saltwater-only topics, coding, homework, people, news, recipes): reply with exactly this one line and nothing else:
+I can only help with fish. Ask me about your fish's health, feeding, tank mates or water.
+- Never help anyone harm an animal.
+
+HOW TO ANSWER (always this shape, always short)
+**<the direct answer in one short sentence, max 12 words>**
+<one sentence saying why, in plain words>
+
+**Do this**
+- <step 1, max 12 words>
+- <step 2, max 12 words>
+- <step 3, optional>
+
+**Watch for**
+- <optional: one warning sign that means things are getting worse>
+
+Rules for the shape:
+- Whole answer under 90 words. Use the simplest words a 12-year-old understands. No jargon; if you must use a word like "ammonia", say what it does.
+- Only use **bold** for the first line and the two section labels. Only use "- " bullets. No headings with #, no tables, no numbered lists, no emojis, no disclaimers.
+- Skip "Watch for" unless it is about sickness, danger, or a new fish.
+- For a simple fact question (e.g. "how big do guppies get?") use only the first two lines, no sections.
+- If it is an emergency (gasping at the surface, ammonia or nitrite above 0, fish dying, chlorine), start the first line with "Act now:" and put the single most important action first.
+- If you really need one detail to answer safely (tank size, which fish), give your best short answer first, then ask one short question on the last line.
+- Use the user's own tank and fish from the context when it helps (say their tank or fish name). Never invent readings, fish or tests they do not have.
+
+SAFETY
+- Animal welfare comes first. Never recommend incompatible fish, overstocking, or adding fish while ammonia or nitrite is above 0.
+- Tap water always needs water conditioner. Change water gradually (10-30%), never all at once. No sudden temperature or pH changes.
+- Do not name medicine doses. Say "follow the label" and suggest a fish shop or aquatic vet for serious illness.
+- If unsure, say so briefly. Never invent facts.
+
+Do not return images, image links, HTML or file attachments. Plain text in the shape above only.`;
+
 function fishDataPrompt(species) {
   return `Create a freshwater aquarium fish profile for: ${species}
 
@@ -76,21 +115,23 @@ Return JSON with exactly these keys:
 }
 
 function assistantPrompt(message, context = {}) {
-  const contextJson = JSON.stringify(context, (key, value) => {
-    if (/image|base64|thumbnail|photo|video/i.test(key)) return undefined;
-    if (typeof value === 'string' && value.length > 500) return value.slice(0, 500);
-    return value;
-  });
+  // Keep only what helps answer fish questions; drop images and long text.
+  const pick = (items, keys) => (Array.isArray(items) ? items.slice(0, 8).map((item) => Object.fromEntries(keys.filter((key) => item?.[key] !== undefined && item?.[key] !== '').map((key) => [key, item[key]]))) : []);
+  const slim = {
+    mode: context.mode,
+    sicknessSpecies: context.sicknessSpecies,
+    tanks: pick(context.tanks, ['tankName', 'tankSize', 'waterType', 'waterQuality', 'temperatureC', 'ph', 'ammoniaPpm', 'nitritePpm', 'testDate']),
+    fish: pick(context.fish, ['name', 'scientificName', 'tankName', 'schoolSize', 'temperament', 'bestTempC', 'phRange']),
+    plants: pick(context.plants, ['name', 'tankName']),
+    hasPhoto: Array.isArray(context.imageUrls) && context.imageUrls.length > 0,
+  };
 
-  return `User question: ${message}
+  return `Question: ${message}
 
-Aquarium context:
-${contextJson}
+The user's aquarium (use it if it helps, never invent more):
+${JSON.stringify(slim)}
 
-Instructions:
-- If this is a simple question or recommendation, give a direct, simple answer in 1-3 sentences and 60-100 words in one paragraph using plain beginner language. Focus on the current status and 1-2 easy next steps.
-- If this is a care, sick fish, or how-to question, provide 3-5 clear numbered steps.
-- Follow all scope, safety, and image rules from the system prompt.`;
+Answer in the exact short shape from your instructions.${slim.hasPhoto ? ' The user attached a photo you cannot see; say what to look for instead of guessing.' : ''}`;
 }
 
 function tankOverviewPrompt({ tank, fish, plants, waterTests }) {
@@ -215,4 +256,4 @@ Rules:
 - Do not include images, image URLs, attachments, base64 data, or download links.`;
 }
 
-module.exports = { AQUARIUM_SYSTEM_PROMPT, fishDataPrompt, plantDataPrompt, assistantPrompt, tankOverviewPrompt, fishCompatibilityPrompt, plantCompatibilityPrompt, waterTestPrompt };
+module.exports = { AQUARIUM_SYSTEM_PROMPT, FISH_ASSISTANT_PROMPT, fishDataPrompt, plantDataPrompt, assistantPrompt, tankOverviewPrompt, fishCompatibilityPrompt, plantCompatibilityPrompt, waterTestPrompt };

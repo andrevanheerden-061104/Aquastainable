@@ -1,35 +1,46 @@
-import HoldButton from '@/components/ui/HoldButton';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, SafeAreaView, Text, View, TouchableOpacity } from 'react-native';
+// Fish Assistant: a chat that only answers questions about fish (health, feeding,
+// tank mates, and the water/tank as it affects fish). Answers come back in a short,
+// fixed format that AnswerCard renders: headline -> one-line why -> 2-3 steps.
 import { useLocalSearchParams } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
-import { Feather } from '@expo/vector-icons';
-import { ThemeType } from '../theme';
+import React, { useEffect, useRef, useState } from 'react';
+import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import WaveBackground from '../../components/AiAssistant/WaveBackground';
-import Header, { HoldIconButton } from '../../components/AiAssistant/Header';
-import HeroSection from '../../components/AiAssistant/HeroSection';
-import SuggestionPills from '../../components/AiAssistant/SuggestionPills';
-import ActionToggles from '../../components/AiAssistant/ActionToggles';
-import InputBar from '../../components/AiAssistant/InputBar';
+import ActionToggles from '@/components/AiAssistant/ActionToggles';
+import AnswerCard from '@/components/AiAssistant/AnswerCard';
+import InputBar from '@/components/AiAssistant/InputBar';
+import HoldAction from '@/components/gestures/HoldAction';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Palette } from '@/constants/palette';
 import { auth } from '@/firebase';
-import { useTankApi } from '../hooks/useTankApi';
+
+import useAiApi, { AiChat, AiChatMessage } from '../hooks/useAiApi';
 import { useFishApi } from '../hooks/useFishApi';
 import { usePlantApi } from '../hooks/usePlantApi';
-import useAiApi, { AiChat, AiChatMessage } from '../hooks/useAiApi';
+import { useTankApi } from '../hooks/useTankApi';
+
+type TopicId = 'sick' | 'feeding' | 'tankmates' | 'water';
+
+const TOPICS: { id: TopicId; label: string; icon: string; mode: string; question: string }[] = [
+  { id: 'sick', label: 'Sick fish', icon: 'exclamationmark.triangle', mode: 'fish sickness and problems', question: 'My fish has white spots on its fins. What should I do?' },
+  { id: 'feeding', label: 'Feeding', icon: 'fish.fill', mode: 'feeding', question: 'How much and how often should I feed my fish?' },
+  { id: 'tankmates', label: 'Tank mates', icon: 'sparkles', mode: 'tank mates and stocking', question: 'Which fish can safely live with my fish?' },
+  { id: 'water', label: 'Water & fish', icon: 'drop.fill', mode: 'water quality for fish', question: 'Is my water safe for my fish right now?' },
+];
+
+// Older links (e.g. from the sickness helper) pass a colour "theme"; map it to a topic.
+const THEME_TO_TOPIC: Record<string, TopicId> = { crimson: 'sick', emerald: 'water', midnight: 'tankmates' };
+
+const FAILED = 'I could not reach the Fish Assistant. Check your connection and hold Retry.';
 
 export default function AskAIScreen() {
   const params = useLocalSearchParams<{
-    theme?: ThemeType;
-    prefillText?: string;
-    prefillMediaUri?: string;
-    prefillMediaType?: 'image' | 'video';
-    prefillMediaUris?: string;
-    prefillSpeciesName?: string;
+    theme?: string; prefillText?: string; prefillMediaUri?: string; prefillMediaType?: 'image' | 'video'; prefillMediaUris?: string; prefillSpeciesName?: string;
   }>();
 
-  const initialTheme = params.theme ?? 'default';
-  const [currentTheme, setCurrentTheme] = useState<ThemeType>(initialTheme);
+  const [topic, setTopic] = useState<TopicId | null>(params.theme ? THEME_TO_TOPIC[params.theme] ?? null : null);
   const [showMediaOptions, setShowMediaOptions] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [tanks, setTanks] = useState<any[]>([]);
@@ -40,33 +51,23 @@ export default function AskAIScreen() {
   const [chatId, setChatId] = useState<string | undefined>();
   const [chats, setChats] = useState<AiChat[]>([]);
   const [historyVisible, setHistoryVisible] = useState(false);
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const prefillText = params.prefillText ?? '';
-  const prefillMediaUri = params.prefillMediaUri ?? null;
-  const prefillMediaType = params.prefillMediaType ?? null;
+  const [draft, setDraft] = useState<string | undefined>(undefined);
+  const scrollRef = useRef<ScrollView>(null);
+
   const prefillMediaUris = (() => {
     try { return params.prefillMediaUris ? JSON.parse(params.prefillMediaUris) as string[] : []; } catch { return []; }
   })();
   const [pendingMediaUris, setPendingMediaUris] = useState<string[]>(() => Array.from(new Set([
-    ...prefillMediaUris,
-    ...(prefillMediaUri ? [prefillMediaUri] : []),
+    ...prefillMediaUris, ...(params.prefillMediaUri ? [params.prefillMediaUri] : []),
   ])));
   const prefillSpeciesName = params.prefillSpeciesName ?? '';
+
   const { getUserTanks } = useTankApi();
   const { getUserFish } = useFishApi();
   const { getUserPlants } = usePlantApi();
   const { askAssistant, getChats, getChat, deleteChat, loading } = useAiApi();
 
   useEffect(() => onAuthStateChanged(auth, (user) => setUserId(user?.uid ?? null)), []);
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
-    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
-
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, []);
   useEffect(() => {
     if (!userId) return;
     Promise.all([getUserTanks(userId), getUserFish(userId), getUserPlants(userId)])
@@ -77,64 +78,58 @@ export default function AskAIScreen() {
       }).catch(() => undefined);
   }, [userId, getUserTanks, getUserFish, getUserPlants]);
 
-  const loadChats = async () => {
+  useEffect(() => { setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60); }, [messages]);
+
+  const openHistory = async () => {
     if (!userId) return;
-    setChats(await getChats(userId));
+    setChats(await getChats(userId).catch(() => []));
     setHistoryVisible(true);
   };
 
-  const openChat = async (selectedChat: AiChat) => {
+  const openChat = async (selected: AiChat) => {
     if (!userId) return;
-    const fullChat = await getChat(userId, selectedChat.id);
-    setChatId(fullChat.id);
-    setMessages(fullChat.messages || []);
+    const full = await getChat(userId, selected.id);
+    setChatId(full.id);
+    setMessages(full.messages || []);
     setHistoryVisible(false);
   };
 
-  const removeChat = async (selectedChat: AiChat) => {
+  const removeChat = async (selected: AiChat) => {
     if (!userId) return;
-    try {
-      await deleteChat(userId, selectedChat.id);
-      setChats((current) => current.filter((chat) => chat.id !== selectedChat.id));
-      if (chatId === selectedChat.id) {
-        setChatId(undefined);
-        setMessages([]);
-      }
-      Alert.alert('Chat deleted', 'The chat and its messages were deleted.');
-    } catch (error) {
-      Alert.alert('Could not delete chat', error instanceof Error ? error.message : 'Please try again.');
-    }
+    await deleteChat(userId, selected.id).catch(() => undefined);
+    setChats((current) => current.filter((chat) => chat.id !== selected.id));
+    if (chatId === selected.id) newChat();
   };
 
-  const getCurrentContext = () => ({
+  const newChat = () => {
+    setChatId(undefined);
+    setMessages([]);
+    setTopic(null);
+    setHistoryVisible(false);
+  };
+
+  const getContext = () => ({
     tanks: selection.tankIds.length ? tanks.filter((tank) => selection.tankIds.includes(tank.tankId || tank.id)) : tanks,
     fish: selection.speciesIds.length ? fish.filter((item) => selection.speciesIds.includes(item.fishId || item.id)) : fish,
     plants: selection.speciesIds.length ? plants.filter((item) => selection.speciesIds.includes(item.plantId || item.id)) : plants,
     selectedTankIds: selection.tankIds,
     selectedSpeciesIds: selection.speciesIds,
-    mode: currentTheme === 'crimson' ? 'sickness and problems' : currentTheme === 'emerald' ? 'water quality and care' : currentTheme === 'midnight' ? 'tank planning and stocking' : 'general aquarium question',
+    mode: TOPICS.find((item) => item.id === topic)?.mode || 'general fish question',
   });
 
   const sendMessage = async (message: string, retryIndex?: number, mediaUri?: string) => {
     if (!userId || loading) return;
-    const retriedMessage = retryIndex === undefined ? undefined : messages[retryIndex];
-    const context = retriedMessage?.context ?? { ...getCurrentContext(), ...(prefillSpeciesName ? { sicknessSpecies: prefillSpeciesName } : {}) };
+    const retried = retryIndex === undefined ? undefined : messages[retryIndex];
+    const context = retried?.context ?? { ...getContext(), ...(prefillSpeciesName ? { sicknessSpecies: prefillSpeciesName } : {}) };
     const historyMessages = retryIndex === undefined ? messages : messages.slice(0, retryIndex);
-    const images = retryIndex === undefined
-      ? Array.from(new Set([...pendingMediaUris, ...(mediaUri ? [mediaUri] : [])]))
-      : retriedMessage?.imageUrls;
+    const images = retryIndex === undefined ? Array.from(new Set([...pendingMediaUris, ...(mediaUri ? [mediaUri] : [])])) : retried?.imageUrls;
     if (retryIndex === undefined) setPendingMediaUris([]);
-    const optimistic: AiChatMessage = { ...retriedMessage, question: message, answer: '', context, imageUrls: images };
-    setMessages((current) => retryIndex === undefined
-      ? [...current, optimistic]
-      : current.map((item, index) => index === retryIndex ? optimistic : item));
+    setDraft(undefined);
+    const optimistic: AiChatMessage = { ...retried, question: message, answer: '', context, imageUrls: images };
+    setMessages((current) => retryIndex === undefined ? [...current, optimistic] : current.map((item, index) => index === retryIndex ? optimistic : item));
     try {
       const result = await askAssistant({
-        userId,
-        chatId,
-        message,
-        context,
-        images,
+        userId, chatId, message, context, images,
         history: historyMessages.flatMap((item) => [{ role: 'user' as const, content: item.question }, ...(item.answer ? [{ role: 'assistant' as const, content: item.answer }] : [])]),
       });
       setChatId(result.chatId);
@@ -143,313 +138,244 @@ export default function AskAIScreen() {
         : current.map((item, index) => index === retryIndex ? { ...item, answer: result.answer, context } : item));
     } catch {
       setMessages((current) => retryIndex === undefined
-        ? [...current.slice(0, -1), { question: message, answer: 'I could not reach the aquarium assistant. Please try again.', context }]
-        : current.map((item, index) => index === retryIndex ? { ...item, answer: 'I could not reach the aquarium assistant. Please try again.', context } : item));
+        ? [...current.slice(0, -1), { question: message, answer: FAILED, context }]
+        : current.map((item, index) => index === retryIndex ? { ...item, answer: FAILED, context } : item));
     }
   };
 
   const tankOptions = tanks.map((tank) => ({ id: tank.tankId || tank.id, label: tank.tankName || 'Unnamed tank', kind: 'tank' as const }));
-  const speciesOptions = [...fish.map((item) => ({ id: item.fishId || item.id, label: item.name || item.FBname || 'Fish', kind: 'fish' as const })), ...plants.map((item) => ({ id: item.plantId || item.id, label: item.name || 'Plant', kind: 'plant' as const }))];
+  const speciesOptions = [
+    ...fish.map((item) => ({ id: item.fishId || item.id, label: item.name || item.FBname || 'Fish', kind: 'fish' as const })),
+    ...plants.map((item) => ({ id: item.plantId || item.id, label: item.name || 'Plant', kind: 'plant' as const })),
+  ];
+  const fishNames = Array.from(new Set(fish.map((item) => item.name || item.FBname).filter(Boolean))).slice(0, 3);
 
   return (
-    <WaveBackground theme={currentTheme}>
-      <SafeAreaView style={[styles.safeArea, keyboardVisible && styles.safeAreaKeyboard]}>
-        <KeyboardAvoidingView
-          style={styles.keyboardAvoidingView}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
-        >
-          <Header onMenu={loadChats} />
+    <View style={styles.screen}>
+      <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
+        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View style={styles.header}>
+            <View style={styles.headerTitle}>
+              <Image source={require('../../assets/logo/Aque-logo.png')} style={styles.headerLogo} resizeMode="contain" />
+              <View>
+                <Text style={styles.title}>Fish Assistant</Text>
+                <Text style={styles.subtitle}>Simple answers about your fish</Text>
+              </View>
+            </View>
+            <View style={styles.headerActions}>
+              <HoldAction onComplete={openHistory} tone="ghost" accessibilityLabel="Open past chats" style={styles.iconBubble} contentStyle={{ gap: 0 }}>
+                <IconSymbol name="clock" size={20} color={Palette.textMuted} />
+              </HoldAction>
+              {messages.length ? (
+                <HoldAction onComplete={newChat} tone="ghost" accessibilityLabel="Start a new chat" style={styles.iconBubble} contentStyle={{ gap: 0 }}>
+                  <IconSymbol name="square.and.pencil" size={20} color={Palette.textMuted} />
+                </HoldAction>
+              ) : null}
+            </View>
+          </View>
 
-          <View style={styles.content}>
-            {messages.length ? (
-              <ScrollView
-                style={styles.chatScroll}
-                contentContainerStyle={styles.chatContent}
-                showsVerticalScrollIndicator={false}
-                keyboardDismissMode="none"
-                keyboardShouldPersistTaps="always"
-              >
-                {messages.map((item, index) => (
-                  <View key={`${item.question}-${index}`} style={styles.messageBlock}>
-                    <View style={styles.questionCard}>
-                      <Text style={styles.question}>{item.question}</Text>
-                      {item.imageUrls?.length ? (
-                        <View style={styles.questionImages}>
-                          {item.imageUrls.slice(0, 3).map((imageUrl) => <Image key={imageUrl} source={{ uri: imageUrl }} style={styles.questionImage} />)}
-                        </View>
-                      ) : null}
+          <ScrollView ref={scrollRef} style={styles.flex} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            {messages.length ? messages.map((item, index) => (
+              <Animated.View key={`${index}-${item.question}`} entering={FadeInDown.duration(260)} style={styles.turn}>
+                <View style={styles.userBubble}>
+                  <Text style={styles.userText}>{item.question}</Text>
+                  {item.imageUrls?.length ? (
+                    <View style={styles.userImages}>
+                      {item.imageUrls.slice(0, 3).map((uri) => <Image key={uri} source={{ uri }} style={styles.userImage} />)}
                     </View>
-                    <View style={styles.answerBlock}>
-                      {item.answer ? <Text style={styles.answer}>{item.answer}</Text> : <ActivityIndicator color="#2E8CA6" />}
-                    </View>
+                  ) : null}
+                </View>
+                <View style={styles.assistantRow}>
+                  <View style={styles.avatar}><Image source={require('../../assets/logo/Aque-logo.png')} style={{ width: 20, height: 20 }} resizeMode="contain" /></View>
+                  <View style={styles.flex}>
                     {item.answer ? (
-                        <HoldButton style={styles.retryButton} onHold={() => sendMessage(item.question, index)} disabled={loading} accessibilityLabel="Hold to retry question">
-                        <Feather name="rotate-cw" size={14} color="#A8C4CB" />
-                        <Text style={styles.retryText}>Retry</Text>
-                      </HoldButton>
-                    ) : null}
+                      <Animated.View entering={FadeIn.duration(220)}>
+                        <AnswerCard answer={item.answer} tone={item.answer === FAILED ? 'muted' : 'default'} />
+                        <HoldAction
+                          onComplete={() => sendMessage(item.question, index)}
+                          disabled={loading}
+                          tone="ghost"
+                          label="Hold to retry"
+                          icon={<IconSymbol name="arrow.clockwise" size={14} color={Palette.textFaint} />}
+                          style={styles.retry}
+                          textStyle={styles.retryText}
+                        />
+                      </Animated.View>
+                    ) : <Typing />}
                   </View>
-                ))}
-              </ScrollView>
-            ) : (
-              <>
-                <HeroSection logoSource={null} />
-                <SuggestionPills
-                  activeTheme={currentTheme}
-                  onSelectPill={(theme: ThemeType) => setCurrentTheme(theme)}
-                />
-              </>
+                </View>
+              </Animated.View>
+            )) : (
+              <Animated.View entering={FadeIn.duration(300)} style={styles.welcome}>
+                <View style={styles.hero}>
+                  <View style={styles.heroIcon}><Image source={require('../../assets/logo/Aque-logo.png')} style={{ width: 44, height: 44 }} resizeMode="contain" /></View>
+                  <Text style={styles.heroTitle}>Ask me about your fish</Text>
+                  <Text style={styles.heroText}>
+                    Health, feeding, tank mates and water. {fishNames.length ? `I know you keep ${fishNames.join(', ')}.` : ''}
+                  </Text>
+                </View>
+
+                <Text style={styles.sectionLabel}>Pick a topic</Text>
+                <View style={styles.topics}>
+                  {TOPICS.map((item) => {
+                    const active = topic === item.id;
+                    return (
+                      <Pressable
+                        key={item.id}
+                        onPress={() => { setTopic(item.id); setDraft(item.question); }}
+                        style={[styles.topic, active && styles.topicActive]}
+                        accessibilityState={{ selected: active }}
+                      >
+                        <IconSymbol name={item.icon as any} size={16} color={active ? Palette.primaryBright : Palette.textMuted} />
+                        <Text style={[styles.topicText, active && styles.topicTextActive]}>{item.label}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
+                <Text style={styles.sectionLabel}>Or hold a question to ask it</Text>
+                <View style={{ gap: 8 }}>
+                  {(topic ? TOPICS.filter((item) => item.id === topic) : TOPICS.slice(0, 3)).map((item) => (
+                    <HoldAction
+                      key={item.id}
+                      onComplete={() => { setTopic(item.id); void sendMessage(item.question); }}
+                      style={styles.starter}
+                      contentStyle={styles.starterContent}
+                      accessibilityLabel={item.question}
+                    >
+                      <Text style={styles.starterText}>{item.question}</Text>
+                      <IconSymbol name="arrow.up" size={16} color={Palette.textFaint} />
+                    </HoldAction>
+                  ))}
+                </View>
+
+                <View style={styles.context}>
+                  <Text style={styles.sectionLabel}>Answers use these tanks and fish</Text>
+                  <ActionToggles tanks={tankOptions} species={speciesOptions} onSelectionChange={setSelection} />
+                </View>
+              </Animated.View>
             )}
-          </View>
+          </ScrollView>
 
-          {showMediaOptions ? (
-            <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={() => setShowMediaOptions(false)} />
-          ) : null}
-
-          {!messages.length ? <View style={styles.bottomSection}>
-            <ActionToggles tanks={tankOptions} species={speciesOptions} onSelectionChange={setSelection} />
-          </View> : null}
-
-          <View style={styles.inputLayer} pointerEvents="box-none">
-            <InputBar
-              initialText={prefillText}
-              initialMediaUri={prefillMediaUri}
-              initialMediaUris={pendingMediaUris}
-              initialMediaType={prefillMediaType}
-              showOptions={showMediaOptions}
-              onShowOptionsChange={setShowMediaOptions}
-              onSend={(message, mediaUri) => sendMessage(message, undefined, mediaUri)}
-            />
-          </View>
+          <InputBar
+            initialText={params.prefillText ?? ''}
+            initialMediaUri={params.prefillMediaUri ?? null}
+            initialMediaUris={pendingMediaUris}
+            initialMediaType={params.prefillMediaType ?? null}
+            showOptions={showMediaOptions}
+            onShowOptionsChange={setShowMediaOptions}
+            onSend={(message, mediaUri) => sendMessage(message, undefined, mediaUri)}
+            disabled={loading}
+            draft={draft}
+          />
+          <Text style={styles.disclaimer}>Guidance only. For a very sick fish, talk to an aquatic vet.</Text>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
       <Modal visible={historyVisible} transparent animationType="slide" onRequestClose={() => setHistoryVisible(false)}>
-        <View style={styles.historyBackdrop}>
-          <View style={styles.historyPanel}>
-            <View style={styles.historyHeader}>
-              <View>
-                <Text style={styles.historyEyebrow}>AQUESTANABLE</Text>
-                <Text style={styles.historyTitle}>Your chats</Text>
-              </View>
-              <HoldIconButton onHold={() => setHistoryVisible(false)} icon="x" label="Hold to close chat history" />
-            </View>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.historyList}>
+        <View style={styles.sheetWrap}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setHistoryVisible(false)} accessibilityLabel="Close past chats" />
+          <View style={styles.sheet}>
+            <View style={styles.grabber} />
+            <Text style={styles.sheetTitle}>Past chats</Text>
+            <Text style={styles.sheetSub}>Hold a chat to open it. Hold the bin to delete.</Text>
+            <ScrollView style={{ maxHeight: 380 }} contentContainerStyle={{ gap: 8, paddingVertical: 12 }}>
               {chats.length ? chats.map((chat) => (
                 <View key={chat.id} style={styles.chatRow}>
-                  <TouchableOpacity style={styles.chatOpen} onPress={() => openChat(chat)} activeOpacity={0.75}>
-                    <View style={styles.chatIcon}><Feather name="message-circle" size={18} color="#A8C4CB" /></View>
-                    <View style={styles.chatDetails}>
+                  <HoldAction onComplete={() => { void openChat(chat); }} style={styles.chatOpen} contentStyle={styles.chatOpenContent} accessibilityLabel={`Open ${chat.title}`}>
+                    <IconSymbol name="clock" size={16} color={Palette.primaryBright} />
+                    <View style={styles.flex}>
                       <Text style={styles.chatTitle} numberOfLines={1}>{chat.title}</Text>
                       <Text style={styles.chatDate}>{new Date(chat.updatedAt).toLocaleDateString()}</Text>
                     </View>
-                    <Feather name="chevron-right" size={18} color="rgba(255,255,255,0.45)" />
-                  </TouchableOpacity>
-                  <HoldIconButton onHold={() => { void removeChat(chat); }} icon="trash-2" fillColor="rgba(235, 87, 87, 0.9)" label={`Hold to delete ${chat.title}`} />
+                  </HoldAction>
+                  <HoldAction onComplete={() => { void removeChat(chat); }} tone="danger" speed="confirm" accessibilityLabel={`Delete ${chat.title}`} style={styles.iconBubble} contentStyle={{ gap: 0 }}>
+                    <IconSymbol name="trash" size={18} color={Palette.dangerText} />
+                  </HoldAction>
                 </View>
-              )) : <Text style={styles.emptyChats}>Your saved conversations will appear here.</Text>}
+              )) : <Text style={styles.empty}>Your chats will show up here.</Text>}
             </ScrollView>
-            <HoldButton style={styles.newChatButton} onHold={() => { setChatId(undefined); setMessages([]); setHistoryVisible(false); }} activeOpacity={0.8} accessibilityLabel="Hold to start new chat">
-              <Feather name="plus" size={18} color="#FFFFFF" />
-              <Text style={styles.newChat}>New chat</Text>
-            </HoldButton>
+            <HoldAction onComplete={newChat} tone="primary" label="Hold to start a new chat" icon={<IconSymbol name="plus" size={18} color={Palette.text} />} style={{ minHeight: 54 }} />
           </View>
         </View>
       </Modal>
-    </WaveBackground>
+    </View>
+  );
+}
+
+function TypingDot({ delay }: { delay: number }) {
+  const value = useSharedValue(0.3);
+  useEffect(() => {
+    value.value = withDelay(delay, withRepeat(withSequence(withTiming(1, { duration: 320 }), withTiming(0.3, { duration: 320 })), -1));
+  }, [delay, value]);
+  const style = useAnimatedStyle(() => ({ opacity: value.value, transform: [{ translateY: (1 - value.value) * 3 }] }));
+  return <Animated.View style={[styles.typingDot, style]} />;
+}
+
+function Typing() {
+  return (
+    <View style={styles.typing} accessibilityLabel="The assistant is typing">
+      <TypingDot delay={0} />
+      <TypingDot delay={160} />
+      <TypingDot delay={320} />
+      <Text style={styles.typingText}>Checking…</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  safeAreaKeyboard: {
-    paddingBottom: 8,
-  },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  chatScroll: {
-    flex: 1,
-  },
-  chatContent: {
-    paddingTop: 12,
-    paddingBottom: 20,
-  },
-  inputLayer: {
-    width: '100%',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  },
-  bottomSection: {
-    width: '100%',
-  },
-  bottomSectionOnTop: {
-    zIndex: 2,
-    position: 'relative',
-  },
-  messageBlock: {
-    marginHorizontal: 20,
-    marginBottom: 12,
-  },
-  questionCard: {
-    alignSelf: 'flex-end',
-    maxWidth: '92%',
-    padding: 14,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.22)',
-  },
-  answerBlock: {
-    paddingHorizontal: 4,
-    paddingTop: 12,
-  },
-  question: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  questionImages: {
-    flexDirection: 'row',
-    gap: 6,
-    marginTop: 10,
-  },
-  questionImage: {
-    width: 64,
-    height: 64,
-    borderRadius: 8,
-  },
-  answer: {
-    color: 'rgba(255,255,255,0.86)',
-    fontSize: 14,
-    lineHeight: 21,
-  },
-  retryButton: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 12,
-    paddingVertical: 4,
-  },
-  retryText: {
-    color: '#A8C4CB',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  historyBackdrop: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    backgroundColor: 'rgba(0,0,0,0.65)',
-  },
-  historyPanel: {
-    marginTop: 44,
-    marginHorizontal: 14,
-    marginBottom: 14,
-    flex: 1,
-    padding: 18,
-    borderRadius: 24,
-    backgroundColor: '#16151A',
-    borderWidth: 1,
-    borderColor: 'rgba(168,196,203,0.18)',
-  },
-  historyHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
-  },
-  historyEyebrow: {
-    color: '#6C98A0',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.5,
-    marginBottom: 5,
-  },
-  historyTitle: {
-    color: '#FFFFFF',
-    fontSize: 26,
-    fontWeight: '800',
-  },
-  historyList: {
-    paddingVertical: 14,
-    flexGrow: 1,
-  },
-  chatRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    marginBottom: 10,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  chatOpen: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  chatIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-    backgroundColor: 'rgba(46,140,166,0.2)',
-  },
-  chatDetails: {
-    flex: 1,
-  },
-  deleteButton: {
-    width: 38,
-    height: 38,
-    marginLeft: 10,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(235,87,87,0.12)',
-  },
-  chatTitle: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  chatDate: {
-    color: 'rgba(255,255,255,0.55)',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  newChat: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  emptyChats: {
-    color: 'rgba(255,255,255,0.55)',
-    fontSize: 14,
-    lineHeight: 21,
-    textAlign: 'center',
-    marginTop: 36,
-  },
-  newChatButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 16,
-    backgroundColor: '#2E8CA6',
-  },
+  flex: { flex: 1 },
+  screen: { flex: 1, backgroundColor: Palette.background },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: Palette.border },
+  headerTitle: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  headerLogo: { width: 30, height: 30 },
+  title: { color: Palette.text, fontSize: 18, fontFamily: 'Montserrat_700Bold' },
+  subtitle: { color: Palette.textFaint, fontSize: 12 },
+  headerActions: { flexDirection: 'row', gap: 6 },
+  iconBubble: { width: 44, height: 44, minHeight: 44, borderRadius: 22, paddingHorizontal: 0 },
+
+  scrollContent: { padding: 16, paddingBottom: 24, flexGrow: 1 },
+  turn: { gap: 10, marginBottom: 18 },
+  userBubble: { alignSelf: 'flex-end', maxWidth: '85%', backgroundColor: Palette.primary, borderRadius: 20, borderBottomRightRadius: 6, paddingHorizontal: 14, paddingVertical: 10 },
+  userText: { color: '#fff', fontSize: 15, lineHeight: 21 },
+  userImages: { flexDirection: 'row', gap: 6, marginTop: 8 },
+  userImage: { width: 64, height: 64, borderRadius: 10 },
+  assistantRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
+  avatar: { width: 30, height: 30, borderRadius: 15, backgroundColor: Palette.primarySoft, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  retry: { alignSelf: 'flex-start', minHeight: 32, paddingHorizontal: 10, marginTop: 6 },
+  retryText: { color: Palette.textFaint, fontSize: 12 },
+
+  typing: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: Palette.surfaceRaised, alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 18, borderTopLeftRadius: 6 },
+  typingDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: Palette.primaryBright },
+  typingText: { color: Palette.textFaint, fontSize: 12, marginLeft: 6 },
+
+  welcome: { gap: 12 },
+  hero: { alignItems: 'center', paddingVertical: 18, gap: 8 },
+  heroIcon: { width: 72, height: 72, borderRadius: 36, backgroundColor: Palette.primarySoft, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  heroTitle: { color: Palette.text, fontSize: 24, fontFamily: 'Montserrat_700Bold', textAlign: 'center' },
+  heroText: { color: Palette.textMuted, fontSize: 14, lineHeight: 20, textAlign: 'center', maxWidth: 300 },
+  sectionLabel: { color: Palette.textFaint, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: 'Montserrat_600SemiBold', marginTop: 6 },
+  topics: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  topic: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999, backgroundColor: Palette.surfaceRaised, borderWidth: 1, borderColor: Palette.border },
+  topicActive: { backgroundColor: Palette.primarySoft, borderColor: Palette.primaryBorder },
+  topicText: { color: Palette.textMuted, fontSize: 13, fontFamily: 'Montserrat_600SemiBold' },
+  topicTextActive: { color: Palette.text },
+  starter: { borderRadius: 18, minHeight: 54 },
+  starterContent: { justifyContent: 'space-between', gap: 12 },
+  starterText: { flex: 1, color: Palette.text, fontSize: 14, lineHeight: 20 },
+  context: { gap: 4, marginTop: 4 },
+
+  disclaimer: { color: Palette.textFaint, fontSize: 10, textAlign: 'center', paddingBottom: 6 },
+
+  sheetWrap: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(5,7,10,0.6)' },
+  sheet: { backgroundColor: Palette.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingTop: 0, paddingBottom: 32, borderWidth: 1, borderColor: Palette.border },
+  grabber: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: Palette.borderStrong, marginVertical: 10 },
+  sheetTitle: { color: Palette.text, fontSize: 22, fontFamily: 'Montserrat_700Bold' },
+  sheetSub: { color: Palette.textFaint, fontSize: 12, marginTop: 4 },
+  chatRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  chatOpen: { flex: 1, borderRadius: 18, minHeight: 58 },
+  chatOpenContent: { justifyContent: 'flex-start', gap: 12 },
+  chatTitle: { color: Palette.text, fontSize: 14, fontFamily: 'Montserrat_600SemiBold' },
+  chatDate: { color: Palette.textFaint, fontSize: 12, marginTop: 2 },
+  empty: { color: Palette.textMuted, textAlign: 'center', paddingVertical: 24 },
 });
