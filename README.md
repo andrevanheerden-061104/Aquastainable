@@ -7,13 +7,25 @@
 
 Aquastainable is a mobile freshwater aquarium-care app. It gives fishkeepers one place to manage tanks, record water tests, track fish and plants, and ask an aquarium-focused AI assistant for guidance.
 
+**Mobile app (React Native + Expo) · by André van Heerden · DV300, Term 3**
+
+## The Brief
+
+Build a cross-platform mobile app around three inspiration cards: **Be More Creative**, **Camera** and **No Traditional UI Buttons**, with one user role, full CRUD and user login.
+
+**The problem.** Beginner fishkeepers lose fish to water they can't read: ammonia, pH, overstocking and incompatible tank mates. Most tracking apps are long forms, so people stop logging. Aquastainable replaces the forms with gestures and the camera, and uses AI to explain what the readings mean for *your* tank.
+
+**Target audience.** Beginner and hobbyist freshwater fishkeepers and aquascapers.
+
 <p align="center">
   <img src="./Aquastainable/assets/mockups/mockup1.png" alt="Aquastainable plant detail mockup" width="850" />
 </p>
 
 ## Contents
 
+- [The Brief](#the-brief)
 - [Features](#features)
+- [Design](#design)
 - [Application Flow](#application-flow)
 - [Technology Stack](#technology-stack)
 - [Project Structure](#project-structure)
@@ -23,6 +35,12 @@ Aquastainable is a mobile freshwater aquarium-care app. It gives fishkeepers one
 - [How the API and LLM Work](#how-the-api-and-llm-work)
 - [Data Model](#data-model)
 - [Development Notes](#development-notes)
+- [Testing](#testing)
+- [Conclusion](#conclusion)
+- [Demo Video](#demo-video)
+- [Author](#author)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
 - [Documentation](#documentation)
 
 ## Features
@@ -31,7 +49,8 @@ Aquastainable is a mobile freshwater aquarium-care app. It gives fishkeepers one
 
 - Animated splash and loading screens.
 - Email sign-up with username, password validation, and optional profile image support.
-- Email sign-in and Firebase Auth session state.
+- Email sign-in with a swipe track, followed by a 6-digit code sent by email (two-factor login).
+- Firebase Auth session state.
 - Gesture drawer navigation across the dashboard, species, water tests, and AI assistant.
 - Hold-to-confirm actions for logout, editing, deleting, saving, and opening protected actions.
 
@@ -51,7 +70,8 @@ Aquastainable is a mobile freshwater aquarium-care app. It gives fishkeepers one
 
 ### Fish
 
-- Search the fish catalogue and add fish to a tank.
+- Instant, typo-tolerant search over 50 common fish (and 33 common plants), plus iNaturalist for every other species.
+- Add fish to a tank.
 - Check fish compatibility before adding it, including tank size, stocking, water conditions, temperament, and school size.
 - Suggest a safer tank when another user-owned tank is a better fit.
 - View species profiles with origin, lifespan, temperature, pH, feeding, space, and schooling information.
@@ -99,6 +119,31 @@ Aquastainable is a mobile freshwater aquarium-care app. It gives fishkeepers one
 - Retry a question, start a new chat, open saved chat history, and delete chats.
 - Use the assistant for species profiles, compatibility assessments, tank overviews, and water-test reviews as well as conversational help.
 
+## Design
+
+### No traditional buttons
+
+| Gesture | Used for |
+| --- | --- |
+| Hold (ripple + haptics) | Edit, delete, save, open, log out |
+| Swipe track | Sign in, check compatibility, add a fish |
+| Edge swipe | Open the navigation drawer (no tab bar) |
+| Camera | Tank photos, sick-fish photos, water-test photos |
+
+Every gesture also has a screen-reader action, so the app stays accessible without visible buttons.
+
+### Style guide
+
+| Role | Colour |
+| --- | --- |
+| Background | `#101217` |
+| Surface | `#171A21` |
+| Water teal (interaction) | `#2E8CA6` / `#4FB3CC` |
+| Fish orange (highlights) | `#E0782A` |
+| Safe / warning / danger | `#4ADE80` / `#FBBF24` / `#F05D5E` |
+
+Typeface: **Montserrat** (Regular, SemiBold, Bold). All colours live in `constants/palette.ts`, and shared UI (photo heroes, spec tiles, photo cards, result sheets) lives in `components/kit/`.
+
 ## Application Flow
 
 1. The splash screen routes the user to sign in or sign up.
@@ -112,9 +157,9 @@ Aquastainable is a mobile freshwater aquarium-care app. It gives fishkeepers one
 
 ### Frameworks and runtimes
 
-- React Native 0.81 with React 19.
-- Expo SDK 54 and Expo Router 6 for the mobile application and file-based navigation.
-- TypeScript 5.9 for frontend types and JavaScript for the Express backend.
+- React Native 0.86 with React 19.
+- Expo SDK 57 and Expo Router for the mobile application and file-based navigation.
+- TypeScript 6 for frontend types and JavaScript for the Express backend.
 - Node.js with Express 4 for the HTTP API.
 
 ### Frontend libraries
@@ -136,6 +181,8 @@ Aquastainable is a mobile freshwater aquarium-care app. It gives fishkeepers one
 - `firebase-admin` for Firestore and server-side Firebase user management.
 - `cloudinary` for tank, water-test, AI-question, and individual-fish image uploads.
 - Groq's OpenAI-compatible Chat Completions API for LLM responses.
+- Resend's HTTPS email API for the 6-digit login codes.
+- iNaturalist and Wikimedia Commons for species search and photos.
 
 ## Project Structure
 
@@ -315,22 +362,52 @@ Firestore stores users in `users/{userId}` and tanks in `tanks/{tankId}`. A tank
 ## Development Notes
 
 - The client Firebase configuration is public web configuration, but Firestore operations should remain behind the backend API.
-- Add Firebase ID-token verification middleware before treating the current `userId` ownership pattern as production authentication.
+- Every API route verifies the Firebase ID token and checks that the 6-digit email code was completed before any data is read or written.
+- The fish and plant quick-search lists live in `backend/fish/data/` and `backend/plant/data/` (copies in `Aquastainable/lib/data/`). Fill their photos with `node scripts/fill-catalogue-images.js` from the `backend` folder.
 - When adding a route, update both the relevant frontend hook and this API reference.
 - Run `npm run lint` from `Aquastainable/` after frontend changes.
+
+## Testing
+
+There is no automated test suite yet. The app was tested by hand on a phone (Expo Go) and on the web, screen by screen, with the browser console checked for errors on every screen. A demo mode (`EXPO_PUBLIC_DEMO=1`) swaps in a fake API and fake login, so every screen can be tested without the live server.
+
+## Conclusion
+
+**Highlights.** A fully buttonless interface, an AI that only ever reasons about the user's own tank, and a compatibility check that can suggest a safer tank before a fish is added.
+
+**Challenges.**
+- *Gestures firing by accident:* solved with one shared hold component (ripple, haptics, screen-reader action) used everywhere.
+- *Email codes on Render:* Render blocks SMTP ports, so login codes are sent through Resend's HTTPS API.
+- *Long, slow AI answers:* shorter prompts, one-to-two sentence tank overviews, and a per-tank cache.
+
+**Future improvements.** Automated tests, camera test-strip colour reading, water-change push reminders, local water reports by town, and a Play Store release.
 
 ## Demo Video
 
 [![Demo video](https://img.shields.io/badge/Demo%20video-DDDDDD?style=for-the-badge&logo=globe&logoColor=white)](https://drive.google.com/file/d/1ulU2ngLPYS8JdWL8cYc7myzTX702v3lv/view?usp=sharing)
 
-## Creaters
+## Author
 
-<a href="https://github.com/andrevanheerden/Yggdrasil/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=andrevanheerden/Yggdrasil" />
+**André van Heerden** · [GitHub](https://github.com/andrevanheerden)
+
+<a href="https://github.com/andrevanheerden/Aquastainable/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=andrevanheerden/Aquastainable" />
 </a>
+
+## License
+
+© 2026 André van Heerden. All rights reserved. This code is shared for portfolio and assessment purposes; no licence is granted to copy, modify or distribute it.
 
 ## Acknowledgments
 
 Thanks for the awesome help in teaching me the skills to develop this project 
 
 - Tsungai Katsuro - tsungai@openwindow.co.za
+
+### Resources
+
+- [Expo](https://docs.expo.dev/) and [React Native](https://reactnative.dev/) documentation
+- [Firebase](https://firebase.google.com/docs) Auth and Firestore documentation
+- [Groq](https://console.groq.com/docs) API documentation
+- [Cloudinary](https://cloudinary.com/documentation), [Resend](https://resend.com/docs) and [iNaturalist](https://api.inaturalist.org/v1/docs/) APIs
+- AI coding assistants were used to help write and refactor parts of the code; every feature was tested and checked by me.
