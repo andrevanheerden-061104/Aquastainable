@@ -5,7 +5,13 @@
   "buildCommand": "npm run build:showcase",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/(signin|signup|verify|loading|home|fishSpecies|fishDetails|plantSpecies|plantDetails|waterTest|waterTestDetails|AskAIScreen|tank)", "destination": "/app.html" },
-    { "source": "/tank/:id", "destination": "/app.html" }
+    {
+      "source": "/(signin|signup|verify|loading|splash|modal|home|fishSpecies|fishDetails|plantSpecies|plantDetails|waterTest|waterTestDetails|AskAIScreen|tank)",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/tank/:id",
+      "destination": "/app.html"
+    }
   ]
 }
