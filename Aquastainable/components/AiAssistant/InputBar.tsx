@@ -3,12 +3,18 @@
 // (Hold timing is the shared "quick" one, so it feels like a firm press.)
 import { Camera } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useEffect, useState } from 'react';
-import { Alert, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Alert, Image, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import HoldAction from '@/components/gestures/HoldAction';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Palette } from '@/constants/palette';
+
+// The text box grows with what you type (like a chat app), up to MAX_INPUT_HEIGHT,
+// and only then scrolls.
+const MIN_INPUT_HEIGHT = 44;
+const MAX_INPUT_HEIGHT = 220;
+const clampHeight = (h: number) => Math.min(MAX_INPUT_HEIGHT, Math.max(MIN_INPUT_HEIGHT, Math.ceil(h)));
 
 type Props = {
   initialText?: string;
@@ -30,7 +36,25 @@ export default function InputBar({
   const [media, setMedia] = useState<string | null>(initialMediaUri || initialMediaUris[0] || null);
   const [mediaType, setMediaType] = useState<'image' | 'video' | null>(initialMediaType || (initialMediaUris.length ? 'image' : null));
 
+  const [inputHeight, setInputHeight] = useState(MIN_INPUT_HEIGHT);
+  const inputRef = useRef<TextInput>(null);
+
   useEffect(() => { if (draft !== undefined) setText(draft); }, [draft]);
+
+  // Web: a textarea doesn't report its content height reliably, so measure it directly.
+  useLayoutEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const el = inputRef.current as unknown as HTMLTextAreaElement | null;
+    if (!el || !el.style) return;
+    const previous = el.style.height;
+    el.style.height = '0px';
+    const next = clampHeight(el.scrollHeight);
+    el.style.height = previous;
+    setInputHeight(next);
+  }, [text]);
+
+  // Native: an emptied box shrinks back to one line.
+  useEffect(() => { if (!text) setInputHeight(MIN_INPUT_HEIGHT); }, [text]);
 
   const pickMedia = async (source: 'camera' | 'gallery') => {
     try {
@@ -92,13 +116,18 @@ export default function InputBar({
           <IconSymbol name={showOptions ? 'xmark' : 'camera'} size={20} color={Palette.textMuted} />
         </HoldAction>
         <TextInput
+          ref={inputRef}
           value={text}
           onChangeText={setText}
+          onContentSizeChange={(event) => {
+            if (Platform.OS !== 'web') setInputHeight(clampHeight(event.nativeEvent.contentSize.height + 22));
+          }}
           placeholder="Ask about your fish…"
           placeholderTextColor={Palette.textFaint}
-          style={styles.input}
+          style={[styles.input, { height: inputHeight }, Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)]}
+          scrollEnabled={inputHeight >= MAX_INPUT_HEIGHT}
           multiline
-          maxLength={600}
+          maxLength={2000}
         />
         <HoldAction
           onComplete={submit}
@@ -121,7 +150,7 @@ const styles = StyleSheet.create({
   bar: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, backgroundColor: Palette.surfaceRaised, borderRadius: 28, padding: 6, borderWidth: 1, borderColor: Palette.border },
   round: { width: 44, height: 44, minHeight: 44, borderRadius: 22, paddingHorizontal: 0 },
   sendActive: { backgroundColor: Palette.primary },
-  input: { flex: 1, color: Palette.text, fontSize: 15, minHeight: 44, maxHeight: 120, paddingTop: 12, paddingBottom: 10, paddingHorizontal: 4 },
+  input: { flex: 1, color: Palette.text, fontSize: 15, minHeight: MIN_INPUT_HEIGHT, maxHeight: MAX_INPUT_HEIGHT, paddingTop: 12, paddingBottom: 10, paddingHorizontal: 4, lineHeight: 20, textAlignVertical: 'top' },
   hint: { color: Palette.textFaint, fontSize: 11, textAlign: 'right', marginRight: 10 },
   options: { flexDirection: 'row', gap: 8 },
   option: { flex: 1 },

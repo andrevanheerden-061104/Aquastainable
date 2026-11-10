@@ -1,6 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+// "Add fish to school" bottom sheet.
+// Fixed header and fixed "hold to add" bar, with the form scrolling in between
+// (no visible scrollbar). Photo sits next to name + age so the form stays short.
 import * as ImagePicker from 'expo-image-picker';
+import React, { useState } from 'react';
+import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+
+import HoldAction from '@/components/gestures/HoldAction';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Palette } from '@/constants/palette';
 
 export type FishRecord = {
   id: string;
@@ -18,21 +25,24 @@ type Props = {
   onSave: (fish: FishRecord) => void | Promise<void>;
 };
 
+type Field = 'image' | 'name' | 'age' | 'story';
+
+const STATUS: { id: 'new' | 'existing'; label: string; icon: string }[] = [
+  { id: 'new', label: 'New to school', icon: 'sparkles' },
+  { id: 'existing', label: 'Already in school', icon: 'person.3' },
+];
+
+const noOutline = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : null;
+
 export default function AddSchoolFishModal({ visible, onClose, onSave }: Props) {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [story, setStory] = useState('');
   const [schoolStatus, setSchoolStatus] = useState<'new' | 'existing'>('new');
-  const addHoldProgress = useRef(new Animated.Value(0)).current;
-  const addHoldTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const addHoldTriggered = useRef(false);
-
-  useEffect(() => () => {
-    if (addHoldTimer.current) {
-      clearTimeout(addHoldTimer.current);
-    }
-  }, []);
+  const [missing, setMissing] = useState<Field[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [focused, setFocused] = useState<Field | null>(null);
 
   const resetForm = () => {
     setImageUri(null);
@@ -40,6 +50,8 @@ export default function AddSchoolFishModal({ visible, onClose, onSave }: Props) 
     setAge('');
     setStory('');
     setSchoolStatus('new');
+    setMissing([]);
+    setSaving(false);
   };
 
   const handleClose = () => {
@@ -49,306 +61,248 @@ export default function AddSchoolFishModal({ visible, onClose, onSave }: Props) 
 
   const handlePickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Permission needed', 'Please allow access to your photos to choose a fish image.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images',
-      quality: 0.8,
-    });
-
+    if (!permission.granted) return;
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
     if (!result.canceled && result.assets?.[0]?.uri) {
       setImageUri(result.assets[0].uri);
+      setMissing((list) => list.filter((f) => f !== 'image'));
     }
   };
 
   const handleSave = async () => {
-    if (!imageUri || !name.trim() || !age.trim() || !story.trim()) {
-      Alert.alert('Missing information', 'Please add an image, name, age, and story for this fish.');
-      return;
-    }
+    const empty: Field[] = [];
+    if (!imageUri) empty.push('image');
+    if (!name.trim()) empty.push('name');
+    if (!age.trim()) empty.push('age');
+    if (!story.trim()) empty.push('story');
+    setMissing(empty);
+    if (empty.length || saving) return;
 
-    await onSave({
-      id: `custom-${Date.now()}`,
-      name: name.trim(),
-      age: age.trim(),
-      health: 'Healthy',
-      description: story.trim(),
-      schoolStatus,
-      image: { uri: imageUri },
-    });
-    resetForm();
-    onClose();
-  };
-
-  const startAddHold = () => {
-    addHoldTriggered.current = false;
-    addHoldProgress.setValue(0);
-    Animated.timing(addHoldProgress, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: false,
-    }).start();
-    addHoldTimer.current = setTimeout(() => {
-      addHoldTriggered.current = true;
-      addHoldTimer.current = null;
-      handleSave();
-    }, 500);
-  };
-
-  const cancelAddHold = () => {
-    if (addHoldTimer.current) {
-      clearTimeout(addHoldTimer.current);
-      addHoldTimer.current = null;
-    }
-
-    addHoldProgress.stopAnimation();
-    if (!addHoldTriggered.current) {
-      addHoldProgress.setValue(0);
+    setSaving(true);
+    try {
+      await onSave({
+        id: `custom-${Date.now()}`,
+        name: name.trim(),
+        age: age.trim(),
+        health: 'Healthy',
+        description: story.trim(),
+        schoolStatus,
+        image: { uri: imageUri as string },
+      });
+      resetForm();
+      onClose();
+    } finally {
+      setSaving(false);
     }
   };
 
-  const addFillWidth = addHoldProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-  });
+  const clearMissing = (field: Field) => setMissing((list) => list.filter((f) => f !== field));
+  const isMissing = (field: Field) => missing.includes(field);
+  const inputStyle = (field: Field) => [
+    styles.input,
+    focused === field && styles.inputFocused,
+    isMissing(field) && styles.inputMissing,
+    noOutline,
+  ];
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
       <View style={styles.backdrop}>
-        <TouchableOpacity style={styles.backdropTouchable} activeOpacity={1} onPress={handleClose} />
-        <View style={styles.modalCard}>
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-            <View style={styles.headerRow}>
-              <View>
+        <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} accessibilityLabel="Close" />
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.sheetWrap}>
+          <View style={styles.sheet}>
+            <View style={styles.handle} />
+
+            <View style={styles.header}>
+              <View style={{ flex: 1 }}>
                 <Text style={styles.title}>Add fish to school</Text>
-                <Text style={styles.subtitle}>Create a profile for your fish.</Text>
+                <Text style={styles.subtitle}>Give this fish its own profile.</Text>
               </View>
-              <TouchableOpacity style={styles.closeButton} onPress={handleClose} activeOpacity={0.8}>
-                <Text style={styles.closeText}>X</Text>
-              </TouchableOpacity>
+              <Pressable onPress={handleClose} style={styles.close} hitSlop={10} accessibilityLabel="Close">
+                <IconSymbol name="xmark" size={18} color={Palette.textMuted} />
+              </Pressable>
             </View>
 
-            <TouchableOpacity style={styles.imagePicker} onPress={handlePickImage} activeOpacity={0.8}>
-              {imageUri ? (
-                <Image source={{ uri: imageUri }} style={styles.previewImage} resizeMode="cover" />
-              ) : (
-                <Text style={styles.imagePickerText}>Choose fish image</Text>
-              )}
-            </TouchableOpacity>
-
-            <View style={styles.field}>
-              <Text style={styles.label}>Name</Text>
-              <TextInput
-                value={name}
-                onChangeText={setName}
-                placeholder="Enter a name"
-                placeholderTextColor="#6E7684"
-                style={styles.input}
-              />
-            </View>
-
-            <View style={styles.field}>
-              <Text style={styles.label}>Age</Text>
-              <TextInput
-                value={age}
-                onChangeText={setAge}
-                placeholder="Example: 1.5 yrs"
-                placeholderTextColor="#6E7684"
-                style={styles.input}
-              />
-            </View>
-
-            <View style={styles.field}>
-              <Text style={styles.label}>Story or description</Text>
-              <TextInput
-                value={story}
-                onChangeText={setStory}
-                placeholder="Tell the story of this fish..."
-                placeholderTextColor="#6E7684"
-                style={[styles.input, styles.storyInput]}
-                multiline
-                textAlignVertical="top"
-              />
-            </View>
-
-            <View style={styles.field}>
-              <Text style={styles.label}>School status</Text>
-              <View style={styles.toggleTrack}>
-                <TouchableOpacity
-                  style={[styles.toggleOption, schoolStatus === 'new' && styles.toggleOptionActive]}
-                  onPress={() => setSchoolStatus('new')}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.toggleText, schoolStatus === 'new' && styles.toggleTextActive]}>New to school</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.toggleOption, schoolStatus === 'existing' && styles.toggleOptionActive]}
-                  onPress={() => setSchoolStatus('existing')}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.toggleText, schoolStatus === 'existing' && styles.toggleTextActive]}>Already in school</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPressIn={startAddHold}
-              onPressOut={cancelAddHold}
-              activeOpacity={0.9}
-              accessibilityLabel="Hold to add fish to school"
+            <ScrollView
+              style={styles.scroll}
+              contentContainerStyle={styles.content}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
             >
-              <Animated.View style={[styles.saveFill, { width: addFillWidth }]} />
-              <Text style={styles.saveText}>Hold to add fish</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
+              <View style={styles.topRow}>
+                <Pressable
+                  onPress={handlePickImage}
+                  style={[styles.photo, isMissing('image') && styles.photoMissing]}
+                  accessibilityLabel={imageUri ? 'Change fish photo' : 'Add fish photo'}
+                >
+                  {imageUri ? (
+                    <>
+                      <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                      <View style={styles.photoBadge}>
+                        <IconSymbol name="camera" size={13} color={Palette.text} />
+                      </View>
+                    </>
+                  ) : (
+                    <>
+                      <View style={styles.photoIcon}>
+                        <IconSymbol name="camera" size={22} color={Palette.primaryBright} />
+                      </View>
+                      <Text style={styles.photoText}>Add photo</Text>
+                    </>
+                  )}
+                </Pressable>
+
+                <View style={styles.topFields}>
+                  <View>
+                    <Text style={styles.label}>Name</Text>
+                    <TextInput
+                      value={name}
+                      onChangeText={(v) => { setName(v); clearMissing('name'); }}
+                      onFocus={() => setFocused('name')}
+                      onBlur={() => setFocused(null)}
+                      placeholder="e.g. Bubbles"
+                      placeholderTextColor={Palette.textFaint}
+                      style={inputStyle('name')}
+                    />
+                  </View>
+                  <View>
+                    <Text style={styles.label}>Age</Text>
+                    <TextInput
+                      value={age}
+                      onChangeText={(v) => { setAge(v); clearMissing('age'); }}
+                      onFocus={() => setFocused('age')}
+                      onBlur={() => setFocused(null)}
+                      placeholder="e.g. 1.5 yrs"
+                      placeholderTextColor={Palette.textFaint}
+                      style={inputStyle('age')}
+                    />
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.field}>
+                <Text style={styles.label}>Story</Text>
+                <TextInput
+                  value={story}
+                  onChangeText={(v) => { setStory(v); clearMissing('story'); }}
+                  onFocus={() => setFocused('story')}
+                  onBlur={() => setFocused(null)}
+                  placeholder="Where it came from, its personality, favourite food…"
+                  placeholderTextColor={Palette.textFaint}
+                  style={[...inputStyle('story'), styles.story]}
+                  multiline
+                  textAlignVertical="top"
+                />
+              </View>
+
+              <View style={styles.field}>
+                <Text style={styles.label}>School status</Text>
+                <View style={styles.segment}>
+                  {STATUS.map((option) => {
+                    const active = schoolStatus === option.id;
+                    return (
+                      <Pressable
+                        key={option.id}
+                        onPress={() => setSchoolStatus(option.id)}
+                        style={[styles.segmentOption, active && styles.segmentActive]}
+                        accessibilityRole="radio"
+                        accessibilityState={{ selected: active }}
+                      >
+                        <IconSymbol name={option.icon as any} size={15} color={active ? Palette.text : Palette.textMuted} />
+                        <Text style={[styles.segmentText, active && styles.segmentTextActive]}>{option.label}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            </ScrollView>
+
+            <View style={styles.footer}>
+              {missing.length ? (
+                <Text style={styles.missingText}>
+                  Add {missing.map((f) => ({ image: 'a photo', name: 'a name', age: 'an age', story: 'a story' })[f]).join(', ')} to save this fish.
+                </Text>
+              ) : null}
+              <HoldAction
+                onComplete={handleSave}
+                tone="primary"
+                disabled={saving}
+                label={saving ? 'Adding…' : 'Hold to add fish'}
+                icon={<IconSymbol name="plus" size={18} color={Palette.text} />}
+                style={styles.saveHold}
+                accessibilityLabel="Hold to add fish to school"
+              />
+            </View>
+          </View>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(7, 12, 21, 0.78)',
-    justifyContent: 'center',
-    paddingHorizontal: 18,
-  },
-  backdropTouchable: {
-    ...StyleSheet.absoluteFill,
-  },
-  modalCard: {
-    maxHeight: '88%',
-    overflow: 'hidden',
-    borderRadius: 24,
-    backgroundColor: '#10131C',
+  backdrop: { flex: 1, backgroundColor: 'rgba(5,7,10,0.72)', justifyContent: 'flex-end' },
+  sheetWrap: { maxHeight: '92%' },
+  sheet: {
+    backgroundColor: Palette.surface,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderBottomWidth: 0,
+    borderColor: Palette.border,
+    overflow: 'hidden',
   },
-  content: {
-    padding: 22,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 18,
-  },
-  title: {
-    color: '#FFFFFF',
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  subtitle: {
-    color: '#8F97A6',
-    fontSize: 13,
-    marginTop: 5,
-  },
-  closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#1B1D26',
+  handle: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: Palette.borderStrong, marginTop: 10 },
+  header: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingHorizontal: 22, paddingTop: 14, paddingBottom: 12 },
+  title: { color: Palette.text, fontSize: 22, fontFamily: 'Montserrat_700Bold' },
+  subtitle: { color: Palette.textMuted, fontSize: 13, marginTop: 4 },
+  close: { width: 36, height: 36, borderRadius: 18, backgroundColor: Palette.surfaceRaised, alignItems: 'center', justifyContent: 'center' },
+  scroll: { flexGrow: 0 },
+  content: { paddingHorizontal: 22, paddingBottom: 8, gap: 18 },
+  topRow: { flexDirection: 'row', gap: 14 },
+  photo: {
+    width: 128,
+    height: 148,
+    borderRadius: 20,
+    backgroundColor: Palette.surfaceRaised,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: Palette.primaryBorder,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  closeText: {
-    color: '#B3B9C9',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  imagePicker: {
-    height: 180,
-    borderRadius: 18,
-    backgroundColor: '#1B1D26',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    gap: 8,
     overflow: 'hidden',
-    marginBottom: 20,
   },
-  previewImage: {
-    width: '100%',
-    height: '100%',
+  photoMissing: { borderColor: Palette.dangerBorder },
+  photoIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: Palette.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  photoText: { color: Palette.text, fontSize: 13, fontFamily: 'Montserrat_600SemiBold' },
+  photoBadge: {
+    position: 'absolute', right: 8, bottom: 8, width: 28, height: 28, borderRadius: 14,
+    backgroundColor: 'rgba(12,14,18,0.7)', alignItems: 'center', justifyContent: 'center',
   },
-  imagePickerText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  field: {
-    marginBottom: 16,
-  },
-  label: {
-    color: '#B3B9C9',
-    fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
+  topFields: { flex: 1, justifyContent: 'space-between', gap: 10 },
+  field: { gap: 0 },
+  label: { color: Palette.textMuted, fontSize: 12, fontFamily: 'Montserrat_600SemiBold', marginBottom: 7 },
   input: {
     minHeight: 48,
     borderRadius: 14,
-    backgroundColor: '#1B1D26',
-    color: '#FFFFFF',
+    backgroundColor: Palette.surfaceRaised,
+    color: Palette.text,
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    fontSize: 14,
+    borderColor: Palette.border,
+    fontSize: 15,
   },
-  storyInput: {
-    minHeight: 110,
-  },
-  toggleTrack: {
-    flexDirection: 'row',
-    padding: 4,
-    borderRadius: 14,
-    backgroundColor: '#1B1D26',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  toggleOption: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 42,
-    borderRadius: 10,
-    paddingHorizontal: 8,
-  },
-  toggleOptionActive: {
-    backgroundColor: '#4FB3CC',
-  },
-  toggleText: {
-    color: '#8F97A6',
-    fontSize: 12,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  toggleTextActive: {
-    color: '#FFFFFF',
-  },
-  saveButton: {
-    overflow: 'hidden',
-    position: 'relative',
-    alignItems: 'center',
-    borderRadius: 14,
-    backgroundColor: '#4FB3CC',
-    paddingVertical: 14,
-    marginTop: 4,
-  },
-  saveFill: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: '#2563EB',
-  },
-  saveText: {
-    zIndex: 1,
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '800',
-  },
+  inputFocused: { borderColor: Palette.primaryBorder },
+  inputMissing: { borderColor: Palette.dangerBorder },
+  story: { minHeight: 104, lineHeight: 21 },
+  segment: { flexDirection: 'row', padding: 4, gap: 4, borderRadius: 16, backgroundColor: Palette.surfaceSunken, borderWidth: 1, borderColor: Palette.border },
+  segmentOption: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, minHeight: 44, borderRadius: 12, paddingHorizontal: 8 },
+  segmentActive: { backgroundColor: Palette.primary },
+  segmentText: { color: Palette.textMuted, fontSize: 13, fontFamily: 'Montserrat_600SemiBold' },
+  segmentTextActive: { color: Palette.text },
+  footer: { paddingHorizontal: 22, paddingTop: 12, paddingBottom: 26, gap: 10, borderTopWidth: 1, borderTopColor: Palette.border, backgroundColor: Palette.surface },
+  missingText: { color: Palette.dangerText, fontSize: 12, textAlign: 'center' },
+  saveHold: { minHeight: 54, borderRadius: 18 },
 });
